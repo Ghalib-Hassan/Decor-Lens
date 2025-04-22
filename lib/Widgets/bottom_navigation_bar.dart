@@ -1,0 +1,117 @@
+import 'package:decor_lens/UI/User%20UI/account_screen.dart';
+import 'package:decor_lens/UI/User%20UI/cart_screen.dart';
+import 'package:decor_lens/UI/User%20UI/favourite_screen.dart';
+import 'package:decor_lens/UI/User%20UI/home_screen.dart';
+import 'package:decor_lens/Utils/colors.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:get/get.dart';
+
+class CustomBottomNavBar extends StatefulWidget {
+  final int currentIndex;
+
+  const CustomBottomNavBar({super.key, required this.currentIndex});
+
+  @override
+  State<CustomBottomNavBar> createState() => _CustomBottomNavBarState();
+}
+
+class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
+  int? selectedIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    selectedIndex = widget.currentIndex;
+  }
+
+  void _onItemTapped(BuildContext context, int index) {
+    if (index == widget.currentIndex) return; // Prevent unnecessary navigation
+    setState(() {
+      selectedIndex = index;
+    });
+
+    Widget nextScreen;
+    switch (index) {
+      case 0:
+        nextScreen = HomeScreen();
+        break;
+      case 1:
+        nextScreen = FavouriteScreen();
+      case 2:
+        nextScreen = Cart();
+        break;
+      case 3:
+        nextScreen = MyAccount();
+        break;
+      default:
+        return;
+    }
+
+    Get.offAll(() => nextScreen, transition: Transition.fadeIn);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      decoration: BoxDecoration(
+        color: white,
+        boxShadow: [
+          BoxShadow(
+              color: black.withOpacity(.1), blurRadius: 8, spreadRadius: 2),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: List.generate(4, (index) {
+          bool isSelected = widget.currentIndex == index;
+          return AnimatedScale(
+            scale: isSelected ? 1.2 : 1.0, // Scale effect on selection
+            duration: const Duration(milliseconds: 200),
+            child: InkWell(
+              onTap: () => _onItemTapped(context, index),
+              child: SvgPicture.asset(
+                _getIconPath(index),
+                height: 25,
+                // width: 24,
+                colorFilter: ColorFilter.mode(
+                  isSelected ? blue : grey,
+                  BlendMode.srcIn,
+                ),
+              ),
+            ),
+          );
+        }),
+      ),
+    );
+  }
+
+  String _getIconPath(int index) {
+    switch (index) {
+      case 0:
+        return 'assets/svg/home.svg';
+      case 1:
+        return 'assets/svg/favorite.svg';
+      case 2:
+        return 'assets/svg/cart.svg';
+      case 3:
+        return 'assets/svg/account.svg';
+      default:
+        return 'assets/svg/home.svg';
+    }
+  }
+
+  String _getTitle(int index) {
+    switch (index) {
+      case 0:
+        return 'Home';
+      case 1:
+        return 'My Cart';
+      case 2:
+        return 'My Account';
+      default:
+        return 'Home';
+    }
+  }
+}
