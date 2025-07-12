@@ -12,3 +12,4 @@ key.properties
 **/*.keystore
 **/*.jks
 android/app/src/main/AndroidManifest.xml
+lib/app-constants.dart
