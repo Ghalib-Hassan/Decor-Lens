@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:decor_lens/UI/Onboarding%20Screens/onboarding_2.dart';
 import 'package:decor_lens/Utils/colors.dart';
 import 'package:decor_lens/Utils/onboarding_bottom_clipper.dart';

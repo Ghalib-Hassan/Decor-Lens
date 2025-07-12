@@ -1,21 +1,23 @@
-import 'package:flutter/material.dart';
-
-final List<IconData> icons = [
-  Icons.star_border_outlined,
-  Icons.laptop_mac_sharp,
-  Icons.mouse,
-  Icons.chair,
-  Icons.bed,
-  Icons.show_chart_sharp,
+final List<String> icons = [
+  'assets/svg/list-popular.svg',
+  'assets/svg/list-table-2.svg',
+  'assets/svg/list-chair.svg',
+  'assets/svg/list-bed.svg',
+  'assets/svg/list-sofa.svg',
+  'assets/svg/list-stool.svg',
+  'assets/svg/list-wardrobe.svg',
+  'assets/svg/list-custom-2.svg',
 ];
 
 final List<String> names = [
   'Popular',
-  'Lamps',
-  'Sofas',
-  'Chairs',
-  'Beds',
-  'Showcase',
+  'Table',
+  'Chair',
+  'Bed',
+  'Sofa',
+  'Stool',
+  'Wardrobe',
+  'Custom',
 ];
 
 final List<String> images = [

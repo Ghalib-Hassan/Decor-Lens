@@ -14,7 +14,15 @@ Color yellow = Colors.yellow;
 Color homeSearch = const Color(0xFF9e9e9e);
 Color homeListview = const Color(0xFFE9E0E0);
 Color amber = Colors.amber;
-
+const kOffBlack = Color(0xFF303030);
+Color adminAppbar = Color(0xFF2C3E50);
+Color adminBack = Color(0xFFF8F9FA);
+Color deepPurple = Colors.deepPurple;
+Color lightBlueAccent = Colors.lightBlueAccent;
+const kChristmasSilver = Color(0xFFE0E0E0);
+Color orangeAccent = Colors.orangeAccent;
+const kTinGrey = Color(0xFF909090);
+const kNoghreiSilver = Color(0xFFBDBDBD);
 // Color appColor = Color(0xFF626F47);
 // Color grey = Color(0xFFA4B465);
 // Color teal = Color(0xFFFFCF50);

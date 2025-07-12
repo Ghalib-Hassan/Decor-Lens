@@ -1,3 +1,4 @@
+import 'package:decor_lens/Provider/dark_mode_provider.dart';
 import 'package:decor_lens/UI/User%20UI/account_screen.dart';
 import 'package:decor_lens/UI/User%20UI/cart_screen.dart';
 import 'package:decor_lens/UI/User%20UI/favourite_screen.dart';
@@ -6,6 +7,7 @@ import 'package:decor_lens/Utils/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
+import 'package:provider/provider.dart';
 
 class CustomBottomNavBar extends StatefulWidget {
   final int currentIndex;
@@ -53,13 +55,18 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
 
   @override
   Widget build(BuildContext context) {
+    final darkModeService = Provider.of<DarkModeService>(context);
+    final isDarkMode = darkModeService.isDarkMode;
+
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 10),
+      padding: const EdgeInsets.symmetric(vertical: 20),
       decoration: BoxDecoration(
-        color: white,
+        color: isDarkMode ? kOffBlack : white,
         boxShadow: [
           BoxShadow(
-              color: black.withOpacity(.1), blurRadius: 8, spreadRadius: 2),
+              color: isDarkMode ? white.withOpacity(.1) : black.withOpacity(.1),
+              blurRadius: 8,
+              spreadRadius: 2),
         ],
       ),
       child: Row(
@@ -67,14 +74,14 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
         children: List.generate(4, (index) {
           bool isSelected = widget.currentIndex == index;
           return AnimatedScale(
-            scale: isSelected ? 1.2 : 1.0, // Scale effect on selection
+            scale: isSelected ? 1.3 : 1.0, // Scale effect on selection
             duration: const Duration(milliseconds: 200),
             child: InkWell(
               onTap: () => _onItemTapped(context, index),
               child: SvgPicture.asset(
                 _getIconPath(index),
                 height: 25,
-                // width: 24,
+                // width: 30,
                 colorFilter: ColorFilter.mode(
                   isSelected ? blue : grey,
                   BlendMode.srcIn,

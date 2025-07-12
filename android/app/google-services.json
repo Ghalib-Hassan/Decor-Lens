@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "365360438592",
+    "project_id": "decor-lens",
+    "storage_bucket": "decor-lens.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:365360438592:android:d5de7daf280b4949ce6ea5",
+        "android_client_info": {
+          "package_name": "com.example.decor_lens"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "365360438592-jjskoru23qsfvhu0ms3d5ch261ur8dhn.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.decor_lens",
+            "certificate_hash": "44e1389b474d0ba84d3237bbbced0b775638de03"
+          }
+        },
+        {
+          "client_id": "365360438592-493kpdf9963c1o4mno7gvevobf4fr6m2.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCEwX7sE1Gpa_ENx6NrDduLKUtz0-MffJs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "365360438592-493kpdf9963c1o4mno7gvevobf4fr6m2.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "365360438592-ilk0mngdedm61htvnj5acl7ql5pvofp6.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.decorLens"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

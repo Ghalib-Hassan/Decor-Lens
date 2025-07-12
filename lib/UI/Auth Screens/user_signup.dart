@@ -1,9 +1,12 @@
+import 'package:decor_lens/Services/auth_services.dart';
 import 'package:decor_lens/UI/Auth%20Screens/user_login.dart';
 import 'package:decor_lens/Utils/colors.dart';
 import 'package:decor_lens/Utils/screen_size.dart';
 import 'package:decor_lens/Widgets/custom_button.dart';
 import 'package:decor_lens/Widgets/email_text_field.dart';
 import 'package:decor_lens/Widgets/password_text_field.dart';
+import 'package:decor_lens/Widgets/phone_number_text_field.dart';
+import 'package:decor_lens/Widgets/snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
@@ -18,6 +21,44 @@ class UserSignUp extends StatefulWidget {
 
 class _UserSignUpState extends State<UserSignUp> {
   bool isLoading = false;
+  TextEditingController firstNameController = TextEditingController();
+  TextEditingController lastNameController = TextEditingController();
+  TextEditingController phoneController = TextEditingController();
+  TextEditingController emailController = TextEditingController();
+  TextEditingController passwordController = TextEditingController();
+  TextEditingController confirmPasswordController = TextEditingController();
+  final GlobalKey<FormState> formKey = GlobalKey<FormState>();
+
+  signUp() async {
+    if (firstNameController.text.isEmpty) {
+      customSnackbar(
+        title: 'First Name is required',
+        message: 'Please enter your first name.',
+        titleColor: red,
+        messageColor: red,
+        icon: Icons.warning_amber_rounded,
+        iconColor: red,
+      );
+      return;
+    }
+    setState(() => isLoading = true);
+
+    await AuthService().signUpUser(
+      name:
+          '${firstNameController.text.trim()} ${lastNameController.text.trim()}',
+      email: emailController.text.trim(),
+      phoneNumber: phoneController.text.trim(),
+      password: passwordController.text.trim(),
+      confirmPassword: confirmPasswordController.text.trim(),
+      onSuccess: () {
+        setState(() => isLoading = false);
+        Get.to(() => UserLogin(), transition: Transition.fadeIn);
+      },
+      onError: () {
+        setState(() => isLoading = false);
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -62,18 +103,28 @@ class _UserSignUpState extends State<UserSignUp> {
                   ),
                 ).animate().fade(duration: 700.ms).slideX(),
                 const SizedBox(height: 30),
-                buildTextField('First Name', Icons.person_outline),
-                buildTextField('Last Name', Icons.person_outline),
+                buildTextField('First Name', Icons.person_outline,
+                    controller: firstNameController),
+                buildTextField('Last Name', Icons.person_outline,
+                    controller: lastNameController),
+                PhoneNumberTextField(controller: phoneController),
                 EmailTextField(
-                    labelText: 'Email',
-                    keyboardType: TextInputType.emailAddress),
+                  labelText: 'Email',
+                  keyboardType: TextInputType.emailAddress,
+                  myController: emailController,
+                ),
                 const SizedBox(height: 20),
                 PasswordTextField(
-                    labelText: 'Password', keyboardType: TextInputType.text),
+                  labelText: 'Password',
+                  keyboardType: TextInputType.text,
+                  myController: passwordController,
+                ),
                 const SizedBox(height: 20),
                 PasswordTextField(
-                    labelText: 'Confirm Password',
-                    keyboardType: TextInputType.text),
+                  labelText: 'Confirm Password',
+                  keyboardType: TextInputType.text,
+                  myController: confirmPasswordController,
+                ),
                 const SizedBox(height: 20),
                 Text(
                   'By signing up, you agree to our Terms and Privacy Policy.',
@@ -84,20 +135,20 @@ class _UserSignUpState extends State<UserSignUp> {
                 ).animate().fade(duration: 800.ms).slideX(),
                 const SizedBox(height: 30),
                 CustomButton(
-                  buttonColor: appColor,
-                  buttonWidth: double.infinity,
-                  buttonHeight: ScreenSize.screenHeight * 0.06,
-                  fonts: GoogleFonts.manrope(
-                    fontWeight: FontWeight.bold,
-                    color: white,
-                    fontSize: ScreenSize.screenHeight * 0.022,
-                  ),
-                  buttonText: 'Create Account',
-                  isLoading: isLoading,
-                  onPressed: () {
-                    Get.to(() => UserLogin(), transition: Transition.fadeIn);
-                  },
-                ).animate().fade(duration: 900.ms).slideY(),
+                        buttonColor: appColor,
+                        buttonWidth: double.infinity,
+                        buttonHeight: ScreenSize.screenHeight * 0.06,
+                        fonts: GoogleFonts.manrope(
+                          fontWeight: FontWeight.bold,
+                          color: white,
+                          fontSize: ScreenSize.screenHeight * 0.022,
+                        ),
+                        buttonText: 'Create Account',
+                        isLoading: isLoading,
+                        onPressed: () => signUp())
+                    .animate()
+                    .fade(duration: 900.ms)
+                    .slideY(),
                 const SizedBox(height: 30),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -135,10 +186,13 @@ class _UserSignUpState extends State<UserSignUp> {
 
   Widget buildTextField(String label, IconData icon,
       {bool isPassword = false,
-      TextInputType keyboardType = TextInputType.text}) {
+      TextInputType keyboardType = TextInputType.text,
+      TextEditingController? controller}) {
     return Padding(
         padding: const EdgeInsets.only(bottom: 15),
         child: TextField(
+          textCapitalization: TextCapitalization.sentences,
+          controller: controller,
           keyboardType: keyboardType,
           obscureText: isPassword,
           style: GoogleFonts.poppins(color: black),

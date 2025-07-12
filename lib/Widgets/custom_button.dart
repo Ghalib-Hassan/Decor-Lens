@@ -1,6 +1,7 @@
 import 'package:decor_lens/Utils/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 // ignore: must_be_immutable
 class CustomButton extends StatefulWidget {
@@ -18,6 +19,7 @@ class CustomButton extends StatefulWidget {
   final double? horizontalPadding;
   final double? verticalPadding;
   final bool isLoading;
+  final double? loadingSize;
 
   CustomButton(
       {super.key,
@@ -34,6 +36,7 @@ class CustomButton extends StatefulWidget {
       this.verticalPadding,
       this.fonts,
       this.buttonBorder,
+      this.loadingSize,
       this.isLoading = false});
 
   @override
@@ -71,9 +74,9 @@ class _CustomButtonState extends State<CustomButton> {
         ),
         onPressed: () => widget.onPressed(),
         child: widget.isLoading
-            ? CircularProgressIndicator(
-                color: appColor,
-                backgroundColor: white,
+            ? LoadingAnimationWidget.stretchedDots(
+                color: white,
+                size: widget.loadingSize ?? 30,
               )
             : Text(
                 widget.buttonText,

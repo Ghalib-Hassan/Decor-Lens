@@ -32,7 +32,6 @@ class _EmailTextFieldState extends State<EmailTextField> {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 2),
         child: TextFormField(
-          textCapitalization: TextCapitalization.sentences,
           keyboardType: widget.keyboardType,
           validator: widget.validator,
           style: TextStyle(color: black, fontSize: screenHeight * 0.02),

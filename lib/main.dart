@@ -1,9 +1,32 @@
-import 'package:decor_lens/UI/splash_screen.dart';
+import 'package:decor_lens/Provider/dark_mode_provider.dart';
+import 'package:decor_lens/Provider/home_screen_provider.dart';
+import 'package:decor_lens/Provider/product_screen_provider.dart';
+import 'package:decor_lens/Services/onboarding_service.dart';
+import 'package:decor_lens/Utils/colors.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:provider/provider.dart';
+import 'firebase_options.dart';
 
-void main() {
-  runApp(const MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env");
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => DarkModeService()),
+        ChangeNotifierProvider(create: (_) => HomeProvider()),
+        ChangeNotifierProvider(create: (_) => ProductProvider()),
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -11,14 +34,22 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GetMaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Decor Lens',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
+    final darkModeService = Provider.of<DarkModeService>(context);
+
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => DarkModeService()),
+      ],
+      child: GetMaterialApp(
+        debugShowCheckedModeBanner: false,
+        title: 'Decor Lens',
+        theme: darkModeService.isDarkMode
+            ? ThemeData.dark().copyWith(
+                scaffoldBackgroundColor: black,
+              )
+            : ThemeData.light(),
+        home: const OnboardingService(),
       ),
-      home: const SplashScreen(),
     );
   }
 }

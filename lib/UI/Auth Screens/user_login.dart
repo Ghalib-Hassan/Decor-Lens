@@ -1,6 +1,7 @@
-import 'package:decor_lens/UI/Admin%20UI/admin.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:decor_lens/Services/auth_services.dart';
+import 'package:decor_lens/UI/Auth%20Screens/admin_email.dart';
 import 'package:decor_lens/UI/Auth%20Screens/user_signup.dart';
-import 'package:decor_lens/UI/User%20UI/home_screen.dart';
 import 'package:decor_lens/Utils/colors.dart';
 import 'package:decor_lens/Utils/screen_size.dart';
 import 'package:decor_lens/Widgets/custom_button.dart';
@@ -11,7 +12,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:collection/collection.dart';
 
 class UserLogin extends StatefulWidget {
   const UserLogin({super.key});
@@ -22,7 +22,23 @@ class UserLogin extends StatefulWidget {
 
 class _UserLoginState extends State<UserLogin> {
   bool isLoading = false;
-  List<String> _gestureSequence = [];
+  final List<String> _gestureSequence = [];
+  TextEditingController emailController = TextEditingController();
+  TextEditingController passwordController = TextEditingController();
+  bool isGoogleSigningIn = false;
+  bool isFacebookSigningIn = false;
+
+  void handleGoogleSignIn() async {
+    setState(() => isGoogleSigningIn = true);
+    await AuthService().signInWithGoogle(context);
+    setState(() => isGoogleSigningIn = false);
+  }
+
+  void handleFacebookSignIn() async {
+    setState(() => isFacebookSigningIn = true);
+    await AuthService().signInWithFacebook(context);
+    setState(() => isFacebookSigningIn = false);
+  }
 
   void _checkAdminAccess() {
     const List<String> correctSequence = [
@@ -35,10 +51,25 @@ class _UserLoginState extends State<UserLogin> {
 
     if (_gestureSequence.length == correctSequence.length) {
       if (ListEquality().equals(_gestureSequence, correctSequence)) {
-        Get.to(() => Admin(), transition: Transition.fadeIn);
+        Get.to(() => AdminEmailScreen(), transition: Transition.fadeIn);
       }
       _gestureSequence.clear(); // Reset sequence after checking
     }
+  }
+
+  signIn() async {
+    setState(() => isLoading = true);
+    AuthService().signInUser(
+      email: emailController.text.trim(),
+      password: passwordController.text.trim(),
+      onSuccess: () {
+        // Navigate to home screen or next page
+        setState(() => isLoading = false);
+      },
+      onError: () {
+        setState(() => isLoading = false);
+      },
+    );
   }
 
   @override
@@ -100,8 +131,20 @@ class _UserLoginState extends State<UserLogin> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: 40),
-
+                  // const SizedBox(height: 40),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: GestureDetector(
+                      onDoubleTap: () {
+                        Get.offAll(UserLogin());
+                      },
+                      child: Container(
+                        width: 100,
+                        height: 60,
+                        color: Colors.transparent,
+                      ),
+                    ),
+                  ),
                   // Welcome Text
                   Text(
                     'Welcome Back!',
@@ -128,6 +171,7 @@ class _UserLoginState extends State<UserLogin> {
                   EmailTextField(
                     labelText: 'Email',
                     keyboardType: TextInputType.emailAddress,
+                    myController: emailController,
                   ).animate().fade(duration: 700.ms).slideY(),
                   const SizedBox(height: 20),
 
@@ -135,6 +179,7 @@ class _UserLoginState extends State<UserLogin> {
                   PasswordTextField(
                     labelText: 'Password',
                     keyboardType: TextInputType.text,
+                    myController: passwordController,
                   ).animate().fade(duration: 700.ms).slideY(),
 
                   const SizedBox(height: 15),
@@ -142,12 +187,17 @@ class _UserLoginState extends State<UserLogin> {
                   // Forgot Password
                   Align(
                     alignment: Alignment.centerLeft,
-                    child: Text(
-                      'Forgot Password?',
-                      style: GoogleFonts.manrope(
-                        fontSize: isTablet ? 16 : 14,
-                        color: teal,
-                        fontWeight: FontWeight.w600,
+                    child: GestureDetector(
+                      onTap: () {
+                        AuthService().showForgotPasswordDialog(context);
+                      },
+                      child: Text(
+                        'Forgot Password?',
+                        style: GoogleFonts.manrope(
+                          fontSize: isTablet ? 16 : 14,
+                          color: teal,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   ).animate().fade(duration: 800.ms).slideX(),
@@ -167,11 +217,7 @@ class _UserLoginState extends State<UserLogin> {
                         color: white,
                         fontSize: ScreenSize.screenHeight * 0.022,
                       ),
-                      onPressed: () {
-                        Get.offAll(() => HomeScreen(),
-                            transition: Transition.circularReveal,
-                            duration: const Duration(seconds: 2));
-                      },
+                      onPressed: () => signIn(),
                     ).animate().fade(duration: 900.ms).slideY(),
                   ),
 
@@ -199,15 +245,22 @@ class _UserLoginState extends State<UserLogin> {
                   // Social Login Buttons
                   SocialButton(
                     imagePath: 'assets/svg/google.svg',
-                    text: 'Continue with Google',
-                    onPressed: () {},
+                    text: isGoogleSigningIn
+                        ? 'Signing in...'
+                        : 'Continue with Google',
+                    isLoading: isGoogleSigningIn,
+                    onPressed: isGoogleSigningIn ? null : handleGoogleSignIn,
                   ).animate().fadeIn(duration: 1100.ms).slideY(),
                   const SizedBox(height: 20),
                   SocialButton(
                     icon: Icons.facebook,
                     iconColor: Colors.blueAccent,
-                    text: 'Continue with Facebook',
-                    onPressed: () {},
+                    text: isFacebookSigningIn
+                        ? 'Signing in...'
+                        : 'Continue with Facebook',
+                    isLoading: isFacebookSigningIn,
+                    onPressed:
+                        isFacebookSigningIn ? null : handleFacebookSignIn,
                   ).animate().fadeIn(duration: 1100.ms).slideY(),
 
                   const SizedBox(height: 30),

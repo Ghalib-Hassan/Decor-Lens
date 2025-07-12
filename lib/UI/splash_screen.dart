@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:decor_lens/UI/Onboarding%20Screens/onboarding_1.dart';
+import 'package:decor_lens/Services/onboarding_service.dart';
 import 'package:decor_lens/Utils/colors.dart';
 import 'package:decor_lens/Utils/screen_size.dart';
 import 'package:flutter/material.dart';
@@ -18,10 +18,11 @@ class _SplashScreenState extends State<SplashScreen> {
   void initState() {
     super.initState();
     Timer(const Duration(seconds: 3), () {
-      Get.off(() => OnboardingScreenOne(), transition: Transition.fadeIn);
+      Get.offAll(() => OnboardingService(), transition: Transition.fade);
     });
   }
 
+  @override
   Widget build(BuildContext context) {
     ScreenSize.init(context);
 
