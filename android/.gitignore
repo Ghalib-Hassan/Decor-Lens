@@ -14,3 +14,4 @@ key.properties
 .env
 lib/app_constants.dart
 android/app/src/main/AndroidManifest.xml
+lib/app_constants.dart
