@@ -48,6 +48,7 @@ class ProductScreen extends StatefulWidget {
 
 class _ProductScreenState extends State<ProductScreen> {
   // late String mainImage;
+  bool isLoading = false;
 
   @override
   void initState() {
@@ -288,29 +289,6 @@ class _ProductScreenState extends State<ProductScreen> {
                           fontWeight: FontWeight.w500),
                     ).animate().fade(duration: 500.ms),
                     SizedBox(height: screenHeight * 0.01),
-                    // GestureDetector(
-                    //   onTap: () {
-                    //     Get.to(
-                    //         () => UserComments(
-                    //               price: widget.price,
-                    //               image: widget.image[0],
-                    //               name: widget.name,
-                    //             ),
-                    //         transition: Transition.rightToLeft);
-                    //   },
-                    //   child: Row(
-                    //     children: [
-                    //       Icon(Icons.star,
-                    //           color: amber, size: screenWidth * 0.05),
-                    //       SizedBox(width: screenWidth * 0.01),
-                    //       Text('4.9 (256)',
-                    //           style: GoogleFonts.manrope(
-                    //               color: black.withOpacity(.5),
-                    //               fontSize: screenWidth * 0.04)),
-                    //     ],
-                    //   ).animate().scale(),
-                    // ),
-
                     StreamBuilder<QuerySnapshot>(
                         stream: FirebaseFirestore.instance
                             .collection('Reviews and Ratings')
@@ -406,7 +384,7 @@ class _ProductScreenState extends State<ProductScreen> {
                           .where('ProductName', isEqualTo: widget.name)
                           .where('userId', isEqualTo: userId)
                           .get();
-                      print(customItemQuery.docs);
+                      print('custom query ${customItemQuery.docs}');
 
                       if (customItemQuery.docs.isEmpty) {
                         customSnackbar(
@@ -441,10 +419,20 @@ class _ProductScreenState extends State<ProductScreen> {
                         return;
                       }
 
+                      final provider =
+                          Provider.of<ProductProvider>(context, listen: false);
+                      await FirebaseFirestore.instance
+                          .collection('Custom Items')
+                          .doc(customItem.id)
+                          .update({
+                        'Quantity': provider.quantity
+                      }); // 👈 Safe update
+
+                      print(
+                          '✅ Quantity updated in Firestore: ${provider.quantity}');
+
                       await Get.to(
-                        () => Cart(
-                            initialTabIndex:
-                                1), // Navigate to the second tab (index starts from 0)
+                        () => Cart(initialTabIndex: 1),
                         transition: Transition.fadeIn,
                         duration: const Duration(milliseconds: 600),
                       );
@@ -456,15 +444,6 @@ class _ProductScreenState extends State<ProductScreen> {
                         color: kChristmasSilver,
                         borderRadius: BorderRadius.circular(16),
                       ),
-                      // child: Consumer<ProductScreenProvider>(
-                      //   builder: (context, provider, child) {
-                      //     return Icon(
-                      //       Icons.shopping_bag_outlined,
-                      //       color: black,
-                      //       size: screenWidth * 0.08,
-                      //     );
-                      //   },
-                      // ),
                       child: Icon(
                         Icons.shopping_cart_outlined,
                         color: black,
@@ -479,7 +458,6 @@ class _ProductScreenState extends State<ProductScreen> {
                     buttonWidth: screenWidth * 0.6,
                     buttonHeight: screenHeight * 0.06,
                     buttonText: 'Customize',
-                    isLoading: provider.isLoading,
                     fonts: GoogleFonts.manrope(
                         color: isDarkMode ? black : white,
                         fontSize: screenHeight * 0.02,
@@ -501,54 +479,21 @@ class _ProductScreenState extends State<ProductScreen> {
                   ),
                 ]
               : [
-                  // GestureDetector(
-                  //   onTap: () {
-                  //     toggleBookmark(
-                  //       widget.name,
-                  //       widget.description,
-                  //       widget.price,
-                  //       widget.image[0],
-                  //       widget.height,
-                  //       widget.width,
-                  //       widget.space,
-                  //       widget.category,
-                  //     );
-                  //   },
-                  //   child: Container(
-                  //     height: 60,
-                  //     width: 60,
-                  //     decoration: BoxDecoration(
-                  //       color: kChristmasSilver,
-                  //       borderRadius: BorderRadius.circular(16),
-                  //     ),
-                  //     child: Consumer<ProductScreenProvider>(
-                  //       builder: (context, provider, child) {
-                  //         return Icon(
-                  //           provider.iconSelected
-                  //               ? Icons.bookmark
-                  //               : Icons.bookmark_outline,
-                  //           color: black,
-                  //           size: screenWidth * 0.08,
-                  //         );
-                  //       },
-                  //     ),
-                  //   ),
-                  // ),
                   SizedBox(width: screenWidth * 0.05),
-
                   CustomButton(
                     buttonColor: isDarkMode ? white : appColor,
                     buttonRadius: 6,
                     buttonHeight: ScreenSize.screenHeight * 0.06,
                     buttonWidth: ScreenSize.screenWidth * 0.83,
                     buttonText: 'Add to cart',
-                    isLoading: provider.isLoading,
+                    isLoading: isLoading,
                     fonts: GoogleFonts.manrope(
                         fontSize: ScreenSize.screenHeight * 0.025,
                         color: isDarkMode ? black : white,
                         fontWeight: FontWeight.bold),
-                    onPressed: () {
-                      provider.addToCart(
+                    onPressed: () async {
+                      setState(() => isLoading = true);
+                      await provider.addToCart(
                         capitalizeFirstLetter(widget.name),
                         widget.description,
                         widget.image[0],
@@ -558,6 +503,7 @@ class _ProductScreenState extends State<ProductScreen> {
                         widget.space,
                         widget.category,
                       );
+                      setState(() => isLoading = false);
                     },
                   ),
                 ],
@@ -748,7 +694,7 @@ class _ProductScreenState extends State<ProductScreen> {
                                   'Image': image,
                                   'Price': price,
                                   'AddedAt': DateTime.now(),
-                                  'Quantity': quantity,
+                                  'Quantity': provider.quantity,
                                   'Height': heightController.text,
                                   'Width': widthController.text,
                                   'Space': spaceController.text,

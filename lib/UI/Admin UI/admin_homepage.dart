@@ -92,19 +92,97 @@ class adminOptionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {
+      onTap: () async {
         // Add onTap navigation logic here
         if (option.isLogout || option.title == "Logout") {
-          FirebaseAuth auth = FirebaseAuth.instance;
-          auth.currentUser?.delete();
-          customSnackbar(
-            title: "Success",
-            message: "Logged out successfully.",
-            titleColor: green,
-            iconColor: green,
-            icon: Icons.check_circle_outline,
-          );
-          Get.offAll(() => UserLogin(), transition: Transition.zoom);
+          final auth = FirebaseAuth.instance;
+          final user = auth.currentUser;
+
+          if (user != null && user.email != null) {
+            String? password;
+
+            // 🔐 Ask for password before deleting
+            await Get.defaultDialog(
+              title: "Confirm Logout",
+              titleStyle: TextStyle(color: black),
+              content: Column(
+                children: [
+                  Text(
+                    "Please enter your password to confirm logout & delete.",
+                    style: TextStyle(color: black),
+                  ),
+                  const SizedBox(height: 10),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: TextField(
+                      style: TextStyle(color: black),
+                      obscureText: true,
+                      onChanged: (value) => password = value,
+                      decoration: InputDecoration(
+                        labelText: "Password",
+                        labelStyle: TextStyle(color: black),
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              backgroundColor: white,
+              textCancel: "Cancel",
+              textConfirm: "Confirm",
+              confirmTextColor: white,
+              buttonColor: appColor,
+              cancelTextColor: red,
+              onConfirm: () async {
+                Get.back(); // close dialog
+
+                if (password == null || password!.isEmpty) {
+                  customSnackbar(
+                    title: "Password Required",
+                    message:
+                        "You must enter a password to delete your account.",
+                    titleColor: red,
+                    iconColor: red,
+                    icon: Icons.error_outline,
+                  );
+                  return;
+                }
+
+                try {
+                  // ✅ Re-authenticate
+                  final credential = EmailAuthProvider.credential(
+                    email: user.email!,
+                    password: password!,
+                  );
+
+                  await user.reauthenticateWithCredential(credential);
+
+                  // ✅ Now delete the account
+                  await user.delete();
+
+                  customSnackbar(
+                    title: "Success",
+                    message: "Logged out successfully.",
+                    titleColor: green,
+                    iconColor: green,
+                    icon: Icons.check_circle_outline,
+                  );
+
+                  Get.offAll(() => UserLogin(), transition: Transition.zoom);
+                } catch (e) {
+                  print("Account deletion failed: $e");
+
+                  customSnackbar(
+                    title: "Failed",
+                    message: "Incorrect password or network error.",
+                    titleColor: red,
+                    iconColor: red,
+                    icon: Icons.error_outline,
+                  );
+                }
+              },
+            );
+          }
         } else if (option.title == "Add New Item") {
           Get.to(AddItemScreen(), transition: Transition.rightToLeft);
         } else if (option.title == "Add Customizable") {

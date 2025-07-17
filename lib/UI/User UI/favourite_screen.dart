@@ -1,9 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:decor_lens/Provider/dark_mode_provider.dart';
+import 'package:decor_lens/UI/User%20UI/product_screen.dart';
 import 'package:decor_lens/Utils/exit_confirmation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'package:decor_lens/Utils/colors.dart';
@@ -45,9 +47,15 @@ class _FavouriteScreenState extends State<FavouriteScreen> {
         final data = doc.data();
         return {
           'id': doc.id,
-          'image': data['Images']?[0] ?? '',
-          'name': data['ItemName'] ?? 'No Name',
+          'image': List<String>.from(data['Images'] ?? []),
+          'name': data['ItemName'] ?? '',
           'price': data['ItemPrice'].toString(),
+          'category': data['Category'] ?? '',
+          'description': data['Description'] ?? '',
+          'height': data['Height'] ?? '',
+          'width': data['Width'] ?? '',
+          'space': data['Space'] ?? '',
+          'model': data['Model'], // nullable
         };
       }).toList();
 
@@ -132,7 +140,23 @@ class _FavouriteScreenState extends State<FavouriteScreen> {
     final isDarkMode = darkModeService.isDarkMode;
     ScreenSize.init(context);
     return GestureDetector(
-      onTap: () {},
+      onTap: () {
+        Get.to(
+          () => ProductScreen(
+            image: product['image'],
+            name: product['name'],
+            price: product['price'],
+            category: product['category'] ?? '',
+            description: product['description'] ?? '',
+            height: product['height'],
+            width: product['width'],
+            space: product['space'],
+            model: product['model'],
+          ),
+          transition: Transition.fadeIn,
+          duration: 600.ms,
+        );
+      },
       child: Card(
         color: isDarkMode ? black : white,
         elevation: 4,
@@ -145,7 +169,7 @@ class _FavouriteScreenState extends State<FavouriteScreen> {
                     const BorderRadius.vertical(top: Radius.circular(12)),
                 child: product['image'] != null && product['image'].isNotEmpty
                     ? Image.network(
-                        product['image'],
+                        product['image'][0],
                         fit: BoxFit.cover,
                         width: double.infinity,
                       ).animate().fade(duration: 500.ms).scale()

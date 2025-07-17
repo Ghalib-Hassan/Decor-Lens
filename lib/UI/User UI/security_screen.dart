@@ -4,6 +4,7 @@ import 'package:decor_lens/UI/Auth%20Screens/user_login.dart';
 import 'package:decor_lens/Utils/colors.dart';
 import 'package:decor_lens/Widgets/appbar.dart';
 import 'package:decor_lens/Widgets/custom_button.dart';
+import 'package:decor_lens/Widgets/snackbar.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -204,19 +205,19 @@ class _SecurityScreenState extends State<SecurityScreen> {
                   }
 
                   await FirebaseAuth.instance.signOut();
-
                   // Show the toast message only once
-                  // ToastPopUp().toast(
-                  //   'Logged out successfully',
-                  //   green,
-                  //   white,
-                  //   screenHeight * 0.016,
-                  //   1,
-                  //   ToastGravity.CENTER,
-                  // );
-                  // final darkModeService =
-                  //     Provider.of<DarkModeService>(context, listen: false);
-                  // await darkModeService.clearDarkModePreference();
+                  customSnackbar(
+                    title: 'Logout Successful 🥹',
+                    message: 'You have been logged out successfully.',
+                    titleColor: green,
+                    messageColor: black,
+                    icon: Icons.check_circle_outline,
+                    iconColor: green,
+                  );
+
+                  final darkModeService =
+                      Provider.of<DarkModeService>(context, listen: false);
+                  await darkModeService.clearDarkModePreference();
 
                   setState(() {
                     isLogout = false;
@@ -229,14 +230,15 @@ class _SecurityScreenState extends State<SecurityScreen> {
                   );
                 } catch (e) {
                   debugPrint('Logout error: $e');
-                  // ToastPopUp().toast(
-                  //   'Error logging out: ${e.toString()}',
-                  //   red,
-                  //   white,
-                  //   16,
-                  //   1,
-                  //   ToastGravity.CENTER,
-                  // );
+                  customSnackbar(
+                    title: 'Error',
+                    message: 'Error logging out: ${e.toString()}',
+                    titleColor: red,
+                    messageColor: black,
+                    icon: Icons.error_outline,
+                    iconColor: red,
+                  );
+
                   setState(() {
                     isLogout = false;
                   });

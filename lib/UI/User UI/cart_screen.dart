@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:decor_lens/Provider/dark_mode_provider.dart';
+import 'package:decor_lens/UI/User%20UI/checkout_screen.dart';
 import 'package:decor_lens/UI/User%20UI/product_screen.dart';
 import 'package:decor_lens/Utils/colors.dart';
 import 'package:decor_lens/Utils/exit_confirmation.dart';
@@ -442,7 +443,7 @@ class _CartState extends State<Cart> with SingleTickerProviderStateMixin {
                       isLoading: isLoading,
                       buttonText: 'Check out',
                       fonts: GoogleFonts.manrope(
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.bold,
                         color: isDarkMode ? black : white,
                         fontSize: screenWidth * 0.05,
                       ),
@@ -505,7 +506,7 @@ class _CartState extends State<Cart> with SingleTickerProviderStateMixin {
                         for (var item in customSnapshot.docs) {
                           String itemId = item.id;
                           combinedCartItems.add({
-                            'ProductName': item['productName'],
+                            'ProductName': item['ProductName'],
                             'Image': item['Image'],
                             'Quantity': item['Quantity'],
                             'Price': item['Price'],
@@ -516,14 +517,14 @@ class _CartState extends State<Cart> with SingleTickerProviderStateMixin {
                           });
                         }
 
-                        // Get.off(
-                        //   () => CheckoutScreen(
-                        //     totalAmount: totalAmount,
-                        //     cartItems: combinedCartItems,
-                        //   ),
-                        //   transition: Transition.fadeIn,
-                        //   duration: const Duration(milliseconds: 600),
-                        // );
+                        Get.to(
+                          () => CheckoutScreen(
+                            orderAmount: totalAmount,
+                            cartItems: combinedCartItems,
+                          ),
+                          transition: Transition.rightToLeft,
+                          duration: const Duration(milliseconds: 600),
+                        );
                         setState(() {
                           isLoading = false;
                         });
@@ -886,6 +887,7 @@ class _CartState extends State<Cart> with SingleTickerProviderStateMixin {
                           .doc(item.id)
                           .delete();
 
+                      print('snackbar');
                       customSnackbar(
                         title: 'Item Removed',
                         message: 'Item removed from cart',
@@ -894,7 +896,7 @@ class _CartState extends State<Cart> with SingleTickerProviderStateMixin {
                         iconColor: blueAccent,
                       );
 
-                      Get.back(result: {'reset': true});
+                      // Get.back(result: {'reset': true});
                       fetchAllItemsAndCalculateTotal();
                       setStateCallback();
                     },

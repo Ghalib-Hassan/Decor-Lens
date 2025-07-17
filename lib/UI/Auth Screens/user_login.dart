@@ -77,226 +77,229 @@ class _UserLoginState extends State<UserLogin> {
     ScreenSize.init(context);
     bool isTablet = ScreenSize.screenWidth > 600;
 
-    return Scaffold(
-      body: Stack(
-        children: [
-          // Background Gradient
-          Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [teal.withOpacity(0.1), white],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
+    return Theme(
+      data: ThemeData.light(),
+      child: Scaffold(
+        body: Stack(
+          children: [
+            // Background Gradient
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [teal.withOpacity(0.1), white],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
               ),
             ),
-          ),
-          GestureDetector(
-            onTap: () {
-              if (_gestureSequence.length < 4) {
-                print('2 tap done');
-                _gestureSequence.add('tap');
+            GestureDetector(
+              onTap: () {
+                if (_gestureSequence.length < 4) {
+                  print('2 tap done');
+                  _gestureSequence.add('tap');
+                  _checkAdminAccess();
+                }
+              },
+              onHorizontalDragEnd: (details) {
+                if (details.primaryVelocity! < 0) {
+                  print('swipeLeft done');
+                  _gestureSequence.add('swipeLeft');
+                } else if (details.primaryVelocity! > 0) {
+                  print('swipeRight done');
+                  _gestureSequence.add('swipeRight');
+                }
                 _checkAdminAccess();
-              }
-            },
-            onHorizontalDragEnd: (details) {
-              if (details.primaryVelocity! < 0) {
-                print('swipeLeft done');
-                _gestureSequence.add('swipeLeft');
-              } else if (details.primaryVelocity! > 0) {
-                print('swipeRight done');
-                _gestureSequence.add('swipeRight');
-              }
-              _checkAdminAccess();
-            },
-            onLongPress: () {
-              print('hold done');
+              },
+              onLongPress: () {
+                print('hold done');
 
-              _gestureSequence.add('hold');
-              _checkAdminAccess();
-            },
-            child: Container(
-              color:
-                  Colors.transparent, // Ensures gestures work over the screen
-              width: double.infinity,
-              height: double.infinity,
-            ),
-          ),
-
-          SingleChildScrollView(
-            child: Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: ScreenSize.screenWidth * 0.08,
-                vertical: ScreenSize.screenHeight * 0.06,
+                _gestureSequence.add('hold');
+                _checkAdminAccess();
+              },
+              child: Container(
+                color:
+                    Colors.transparent, // Ensures gestures work over the screen
+                width: double.infinity,
+                height: double.infinity,
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // const SizedBox(height: 40),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: GestureDetector(
-                      onDoubleTap: () {
-                        Get.offAll(UserLogin());
-                      },
-                      child: Container(
-                        width: 100,
-                        height: 60,
-                        color: Colors.transparent,
-                      ),
-                    ),
-                  ),
-                  // Welcome Text
-                  Text(
-                    'Welcome Back!',
-                    style: GoogleFonts.manrope(
-                      fontSize: isTablet ? 34 : 28,
-                      fontWeight: FontWeight.bold,
-                      color: black.withOpacity(0.9),
-                    ),
-                  ).animate().fade(duration: 600.ms).slideX(),
-                  const SizedBox(height: 6),
+            ),
 
-                  // Subtitle
-                  Text(
-                    'Sign in to continue your journey with us.',
-                    style: GoogleFonts.manrope(
-                      fontSize: isTablet ? 18 : 16,
-                      color: grey.withOpacity(0.8),
-                    ),
-                  ).animate().fade(duration: 700.ms).slideX(),
-
-                  const SizedBox(height: 30),
-
-                  // Email Field
-                  EmailTextField(
-                    labelText: 'Email',
-                    keyboardType: TextInputType.emailAddress,
-                    myController: emailController,
-                  ).animate().fade(duration: 700.ms).slideY(),
-                  const SizedBox(height: 20),
-
-                  // Password Field
-                  PasswordTextField(
-                    labelText: 'Password',
-                    keyboardType: TextInputType.text,
-                    myController: passwordController,
-                  ).animate().fade(duration: 700.ms).slideY(),
-
-                  const SizedBox(height: 15),
-
-                  // Forgot Password
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: GestureDetector(
-                      onTap: () {
-                        AuthService().showForgotPasswordDialog(context);
-                      },
-                      child: Text(
-                        'Forgot Password?',
-                        style: GoogleFonts.manrope(
-                          fontSize: isTablet ? 16 : 14,
-                          color: teal,
-                          fontWeight: FontWeight.w600,
+            SingleChildScrollView(
+              child: Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: ScreenSize.screenWidth * 0.08,
+                  vertical: ScreenSize.screenHeight * 0.06,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // const SizedBox(height: 40),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: GestureDetector(
+                        onDoubleTap: () {
+                          Get.offAll(UserLogin());
+                        },
+                        child: Container(
+                          width: 100,
+                          height: 60,
+                          color: Colors.transparent,
                         ),
                       ),
                     ),
-                  ).animate().fade(duration: 800.ms).slideX(),
-
-                  const SizedBox(height: 40),
-
-                  // Login Button
-                  SizedBox(
-                    width: double.infinity,
-                    child: CustomButton(
-                      buttonHeight: ScreenSize.screenHeight * 0.06,
-                      buttonWidth: ScreenSize.screenWidth * 0.4,
-                      buttonText: 'Log In',
-                      isLoading: isLoading,
-                      fonts: GoogleFonts.manrope(
+                    // Welcome Text
+                    Text(
+                      'Welcome Back!',
+                      style: GoogleFonts.manrope(
+                        fontSize: isTablet ? 34 : 28,
                         fontWeight: FontWeight.bold,
-                        color: white,
-                        fontSize: ScreenSize.screenHeight * 0.022,
+                        color: black.withOpacity(0.9),
                       ),
-                      onPressed: () => signIn(),
-                    ).animate().fade(duration: 900.ms).slideY(),
-                  ),
+                    ).animate().fade(duration: 600.ms).slideX(),
+                    const SizedBox(height: 6),
 
-                  const SizedBox(height: 30),
-
-                  // OR Divider
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Expanded(child: Divider(color: grey.withOpacity(.4))),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 10),
-                        child: Text('OR',
-                            style: GoogleFonts.manrope(
-                              color: grey.withOpacity(.7),
-                              fontWeight: FontWeight.w500,
-                            )),
+                    // Subtitle
+                    Text(
+                      'Sign in to continue your journey with us.',
+                      style: GoogleFonts.manrope(
+                        fontSize: isTablet ? 18 : 16,
+                        color: grey.withOpacity(0.8),
                       ),
-                      Expanded(child: Divider(color: grey.withOpacity(.4))),
-                    ],
-                  ).animate().fade(duration: 1000.ms).slideY(),
+                    ).animate().fade(duration: 700.ms).slideX(),
 
-                  const SizedBox(height: 25),
+                    const SizedBox(height: 30),
 
-                  // Social Login Buttons
-                  SocialButton(
-                    imagePath: 'assets/svg/google.svg',
-                    text: isGoogleSigningIn
-                        ? 'Signing in...'
-                        : 'Continue with Google',
-                    isLoading: isGoogleSigningIn,
-                    onPressed: isGoogleSigningIn ? null : handleGoogleSignIn,
-                  ).animate().fadeIn(duration: 1100.ms).slideY(),
-                  const SizedBox(height: 20),
-                  SocialButton(
-                    icon: Icons.facebook,
-                    iconColor: Colors.blueAccent,
-                    text: isFacebookSigningIn
-                        ? 'Signing in...'
-                        : 'Continue with Facebook',
-                    isLoading: isFacebookSigningIn,
-                    onPressed:
-                        isFacebookSigningIn ? null : handleFacebookSignIn,
-                  ).animate().fadeIn(duration: 1100.ms).slideY(),
+                    // Email Field
+                    EmailTextField(
+                      labelText: 'Email',
+                      keyboardType: TextInputType.emailAddress,
+                      myController: emailController,
+                    ).animate().fade(duration: 700.ms).slideY(),
+                    const SizedBox(height: 20),
 
-                  const SizedBox(height: 30),
+                    // Password Field
+                    PasswordTextField(
+                      labelText: 'Password',
+                      keyboardType: TextInputType.text,
+                      myController: passwordController,
+                    ).animate().fade(duration: 700.ms).slideY(),
 
-                  // Register Link
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        "New here? ",
-                        style: GoogleFonts.manrope(
-                          color: black.withOpacity(0.8),
-                          fontSize: isTablet ? 16 : 15,
-                        ),
-                      ),
-                      GestureDetector(
+                    const SizedBox(height: 15),
+
+                    // Forgot Password
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: GestureDetector(
                         onTap: () {
-                          Get.to(() => UserSignUp(),
-                              transition: Transition.downToUp);
+                          AuthService().showForgotPasswordDialog(context);
                         },
                         child: Text(
-                          'Create an account',
+                          'Forgot Password?',
                           style: GoogleFonts.manrope(
+                            fontSize: isTablet ? 16 : 14,
                             color: teal,
-                            fontWeight: FontWeight.bold,
-                            fontSize: isTablet ? 16 : 15,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ),
-                    ],
-                  ).animate().fade(duration: 1100.ms).slideY(),
-                ],
+                    ).animate().fade(duration: 800.ms).slideX(),
+
+                    const SizedBox(height: 40),
+
+                    // Login Button
+                    SizedBox(
+                      width: double.infinity,
+                      child: CustomButton(
+                        buttonHeight: ScreenSize.screenHeight * 0.06,
+                        buttonWidth: ScreenSize.screenWidth * 0.4,
+                        buttonText: 'Log In',
+                        isLoading: isLoading,
+                        fonts: GoogleFonts.manrope(
+                          fontWeight: FontWeight.bold,
+                          color: white,
+                          fontSize: ScreenSize.screenHeight * 0.022,
+                        ),
+                        onPressed: () => signIn(),
+                      ).animate().fade(duration: 900.ms).slideY(),
+                    ),
+
+                    const SizedBox(height: 30),
+
+                    // OR Divider
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Expanded(child: Divider(color: grey.withOpacity(.4))),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                          child: Text('OR',
+                              style: GoogleFonts.manrope(
+                                color: grey.withOpacity(.7),
+                                fontWeight: FontWeight.w500,
+                              )),
+                        ),
+                        Expanded(child: Divider(color: grey.withOpacity(.4))),
+                      ],
+                    ).animate().fade(duration: 1000.ms).slideY(),
+
+                    const SizedBox(height: 25),
+
+                    // Social Login Buttons
+                    SocialButton(
+                      imagePath: 'assets/svg/google.svg',
+                      text: isGoogleSigningIn
+                          ? 'Signing in...'
+                          : 'Continue with Google',
+                      isLoading: isGoogleSigningIn,
+                      onPressed: isGoogleSigningIn ? null : handleGoogleSignIn,
+                    ).animate().fadeIn(duration: 1100.ms).slideY(),
+                    const SizedBox(height: 20),
+                    SocialButton(
+                      icon: Icons.facebook,
+                      iconColor: Colors.blueAccent,
+                      text: isFacebookSigningIn
+                          ? 'Signing in...'
+                          : 'Continue with Facebook',
+                      isLoading: isFacebookSigningIn,
+                      onPressed:
+                          isFacebookSigningIn ? null : handleFacebookSignIn,
+                    ).animate().fadeIn(duration: 1100.ms).slideY(),
+
+                    const SizedBox(height: 30),
+
+                    // Register Link
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          "New here? ",
+                          style: GoogleFonts.manrope(
+                            color: black.withOpacity(0.8),
+                            fontSize: isTablet ? 16 : 15,
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: () {
+                            Get.to(() => UserSignUp(),
+                                transition: Transition.downToUp);
+                          },
+                          child: Text(
+                            'Create an account',
+                            style: GoogleFonts.manrope(
+                              color: teal,
+                              fontWeight: FontWeight.bold,
+                              fontSize: isTablet ? 16 : 15,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ).animate().fade(duration: 1100.ms).slideY(),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

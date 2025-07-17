@@ -15,20 +15,25 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-class AddAddressScreen extends StatefulWidget {
+class EditAddress extends StatefulWidget {
+  final Map<String, dynamic> addressData;
+  final int index;
+
+  EditAddress({required this.addressData, required this.index});
+
   @override
-  State<AddAddressScreen> createState() => _AddAddressScreenState();
+  State<EditAddress> createState() => _EditAddressState();
 }
 
-class _AddAddressScreenState extends State<AddAddressScreen> {
+class _EditAddressState extends State<EditAddress> {
   Completer<GoogleMapController> controller = Completer();
   final TextEditingController nameController = TextEditingController();
   final TextEditingController phoneController = TextEditingController();
   final TextEditingController zipCodeController = TextEditingController();
   String setAddress = '';
-  String? city;
   bool isLoading = false;
   LatLng? selectedPosition;
+  String? city;
 
   static const CameraPosition _initialPosition = CameraPosition(
     target: LatLng(30.3749, 69.3494),
@@ -102,35 +107,7 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
     }
   }
 
-  Future<void> fetchPhoneNumber() async {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null) return;
-
-    try {
-      DocumentSnapshot userDoc =
-          await FirebaseFirestore.instance.collection('Users').doc(uid).get();
-
-      if (userDoc.exists) {
-        final data = userDoc.data() as Map<String, dynamic>;
-        final phone = data['Phone_number'];
-        final name = data['Name'];
-
-        if (phone != null && phone.toString().isNotEmpty ||
-            name != null && name.toString().isNotEmpty) {
-          String formattedPhone = phone.toString();
-          if (formattedPhone.startsWith('+92')) {
-            formattedPhone = formattedPhone.replaceFirst('+92', '');
-          }
-          phoneController.text = formattedPhone;
-          nameController.text = name.toString();
-        }
-      }
-    } catch (e) {
-      print("Error fetching phone number: $e");
-    }
-  }
-
-  Future<void> saveAddress() async {
+  Future<void> updateAddress() async {
     setState(() {
       isLoading = true;
     });
@@ -157,8 +134,8 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
 
     final addressData = {
       'Name': nameController.text.trim(),
-      'Address': setAddress,
       'City': city,
+      'Address': setAddress,
       'Phone_number': '+92${phoneController.text.trim()}',
       'Zip_code': zipCodeController.text.trim(),
       'lat': selectedPosition!.latitude,
@@ -167,10 +144,18 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
     };
 
     final docRef = FirebaseFirestore.instance.collection('Users').doc(uid);
+    final docSnapshot = await docRef.get();
 
-    await docRef.set({
-      'addresses': FieldValue.arrayUnion([addressData])
-    }, SetOptions(merge: true));
+    if (docSnapshot.exists) {
+      final data = docSnapshot.data() as Map<String, dynamic>;
+      List<dynamic> addresses = data['addresses'] ?? [];
+
+      if (widget.index < addresses.length) {
+        addresses[widget.index] = addressData;
+
+        await docRef.update({'addresses': addresses});
+      }
+    }
 
     setState(() {
       isLoading = false;
@@ -186,8 +171,33 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
   @override
   void initState() {
     super.initState();
-    getUserCurrentLocation();
-    fetchPhoneNumber();
+    nameController.text = widget.addressData['Name'] ?? '';
+    zipCodeController.text = widget.addressData['Zip_code'] ?? '';
+    setAddress = widget.addressData['Address'] ?? '';
+    double lat = widget.addressData['lat'];
+    double lng = widget.addressData['lng'];
+
+    String phone = widget.addressData['Phone_number'] ?? '';
+    if (phone.startsWith('+92')) {
+      phone = phone.replaceFirst('+92', '');
+    }
+    phoneController.text = phone;
+
+    selectedPosition = LatLng(lat, lng);
+
+    _markers.add(
+      Marker(
+        markerId: MarkerId('selected'),
+        position: selectedPosition!,
+      ),
+    );
+
+    // Move camera to saved location
+    controller.future.then((mapController) {
+      mapController.animateCamera(CameraUpdate.newCameraPosition(
+        CameraPosition(target: selectedPosition!, zoom: 14),
+      ));
+    });
   }
 
   @override
@@ -200,7 +210,7 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(kToolbarHeight),
         child: MyAppbar(
-          title: "Add Address",
+          title: "Edit Address",
           showLeading: true,
           fontColor: isDarkMode ? white : black,
           leadingIconColor: isDarkMode ? white : black,
@@ -359,8 +369,8 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
                       ),
                       SizedBox(height: 10),
                       TextField(
-                        maxLength: 10,
                         controller: phoneController,
+                        maxLength: 10,
                         style: TextStyle(
                           color: isDarkMode ? white : black,
                         ),
@@ -404,8 +414,8 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                               color: isDarkMode ? black : white),
-                          buttonText: 'Save Address',
-                          onPressed: saveAddress)
+                          buttonText: 'Update Address',
+                          onPressed: updateAddress)
                     ],
                   ),
                 ),

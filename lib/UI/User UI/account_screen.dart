@@ -72,16 +72,20 @@ class _MyAccountState extends State<MyAccount> {
             if (!snapshot.hasData)
               return Center(child: CircularProgressIndicator());
 
+            final darkModeService = Provider.of<DarkModeService>(context);
+            final isDarkMode = darkModeService.isDarkMode;
             final data = snapshot.data!.data() as Map<String, dynamic>;
             nameController.text = data['Name'] ?? '';
             updatedProfileUrl ??= data['Profile_picture'];
 
             return AlertDialog(
+              backgroundColor: isDarkMode ? kOffBlack : white,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(15)),
               title: Text('Edit Profile',
                   style: GoogleFonts.manrope(
                     fontWeight: FontWeight.bold,
+                    color: isDarkMode ? white : black,
                   )),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -111,8 +115,11 @@ class _MyAccountState extends State<MyAccount> {
                   const SizedBox(height: 15),
                   TextField(
                     controller: nameController,
+                    style: TextStyle(color: isDarkMode ? white : black),
                     decoration: InputDecoration(
                       labelText: 'Name',
+                      labelStyle: TextStyle(
+                          color: isDarkMode ? white : black.withOpacity(0.7)),
                       border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10)),
                     ),
@@ -121,7 +128,9 @@ class _MyAccountState extends State<MyAccount> {
               ),
               actions: [
                 TextButton(
-                  child: Text('Cancel', style: GoogleFonts.manrope()),
+                  child: Text('Cancel',
+                      style: GoogleFonts.manrope(
+                          color: isDarkMode ? white : black)),
                   onPressed: () => Navigator.of(context).pop(),
                 ),
                 ElevatedButton(
@@ -214,8 +223,6 @@ class _MyAccountState extends State<MyAccount> {
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          Icon(Icons.notifications_none,
-                              size: 30, color: white),
                         ],
                       ),
                     ),

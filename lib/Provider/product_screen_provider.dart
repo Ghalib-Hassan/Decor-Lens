@@ -1,8 +1,10 @@
+import 'package:decor_lens/UI/User%20UI/cart_screen.dart';
 import 'package:decor_lens/Utils/colors.dart';
 import 'package:decor_lens/Widgets/snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:get/get.dart';
 
 class ProductProvider with ChangeNotifier {
   String customHeight = '', customWidth = '', customSpace = '';
@@ -67,68 +69,68 @@ class ProductProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> updateCustomItem({
-    required String productName,
-    required String description,
-    required String image,
-    required String price,
-    required int quantity,
-    required String height,
-    required String width,
-    required String space,
-    required String category,
-    required Function(String message, bool isSuccess) onComplete,
-  }) async {
-    String userId = FirebaseAuth.instance.currentUser!.uid;
+  // Future<void> updateCustomItem({
+  //   required String productName,
+  //   required String description,
+  //   required String image,
+  //   required String price,
+  //   required int quantity,
+  //   required String height,
+  //   required String width,
+  //   required String space,
+  //   required String category,
+  //   required Function(String message, bool isSuccess) onComplete,
+  // }) async {
+  //   String userId = FirebaseAuth.instance.currentUser!.uid;
 
-    final customItemQuery = await FirebaseFirestore.instance
-        .collection('CustomItems')
-        .where('productName', isEqualTo: productName)
-        .where('userId', isEqualTo: userId)
-        .get();
+  //   final customItemQuery = await FirebaseFirestore.instance
+  //       .collection('Custom Items')
+  //       .where('productName', isEqualTo: productName)
+  //       .where('userId', isEqualTo: userId)
+  //       .get();
 
-    try {
-      if (customItemQuery.docs.isNotEmpty) {
-        // Update
-        String docId = customItemQuery.docs.first.id;
-        await FirebaseFirestore.instance
-            .collection('CustomItems')
-            .doc(docId)
-            .update({
-          'height': height,
-          'width': width,
-          'space': space,
-        });
-        customHeight = height;
-        customWidth = width;
-        customSpace = space;
-        notifyListeners();
-        onComplete("Dimensions updated successfully.", true);
-      } else {
-        // Add new
-        await FirebaseFirestore.instance.collection('CustomItems').add({
-          'userId': userId,
-          'productName': productName,
-          'description': description,
-          'image': image,
-          'price': price,
-          'addedAt': DateTime.now(),
-          'quantity': quantity,
-          'height': height,
-          'width': width,
-          'space': space,
-          'category': category,
-        });
-        customHeight = height;
-        customWidth = width;
-        customSpace = space;
-        notifyListeners();
-        onComplete("Customization done successfully.", true);
-      }
-    } catch (e) {
-      onComplete("An error occurred: ${e.toString()}", false);
-    }
-  }
+  //   try {
+  //     if (customItemQuery.docs.isNotEmpty) {
+  //       // Update
+  //       String docId = customItemQuery.docs.first.id;
+  //       await FirebaseFirestore.instance
+  //           .collection('CustomItems')
+  //           .doc(docId)
+  //           .update({
+  //         'height': height,
+  //         'width': width,
+  //         'space': space,
+  //       });
+  //       customHeight = height;
+  //       customWidth = width;
+  //       customSpace = space;
+  //       notifyListeners();
+  //       onComplete("Dimensions updated successfully.", true);
+  //     } else {
+  //       // Add new
+  //       await FirebaseFirestore.instance.collection('CustomItems').add({
+  //         'userId': userId,
+  //         'productName': productName,
+  //         'description': description,
+  //         'image': image,
+  //         'price': price,
+  //         'addedAt': DateTime.now(),
+  //         'quantity': quantity,
+  //         'height': height,
+  //         'width': width,
+  //         'space': space,
+  //         'category': category,
+  //       });
+  //       customHeight = height;
+  //       customWidth = width;
+  //       customSpace = space;
+  //       notifyListeners();
+  //       onComplete("Customization done successfully.", true);
+  //     }
+  //   } catch (e) {
+  //     onComplete("An error occurred: ${e.toString()}", false);
+  //   }
+  // }
 
   Future<void> addToCart(
       String productName,
@@ -187,11 +189,15 @@ class ProductProvider with ChangeNotifier {
           iconColor: green,
         );
 
-        // Get.to(
-        //   () => Cart(),
-        //   transition: Transition.fadeIn,
-        //   duration: const Duration(milliseconds: 600),
-        // );
+        await Get.to(
+          () => Cart(
+              initialTabIndex:
+                  0), // Navigate to the second tab (index starts from 0)
+          transition: Transition.fadeIn,
+          duration: const Duration(milliseconds: 600),
+        );
+        isLoading = false;
+        notifyListeners();
       }
     } catch (e) {
       customSnackbar(

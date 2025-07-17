@@ -1,7 +1,9 @@
+import 'package:decor_lens/Provider/dark_mode_provider.dart';
 import 'package:decor_lens/Utils/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
+import 'package:provider/provider.dart';
 
 // ignore: must_be_immutable
 class CustomButton extends StatefulWidget {
@@ -46,6 +48,8 @@ class CustomButton extends StatefulWidget {
 class _CustomButtonState extends State<CustomButton> {
   @override
   Widget build(BuildContext context) {
+    final darkModeService = Provider.of<DarkModeService>(context);
+    final isDarkMode = darkModeService.isDarkMode;
     return Container(
       width: widget.buttonWidth ?? 20,
       height: widget.buttonHeight ?? 5,
@@ -75,7 +79,7 @@ class _CustomButtonState extends State<CustomButton> {
         onPressed: () => widget.onPressed(),
         child: widget.isLoading
             ? LoadingAnimationWidget.stretchedDots(
-                color: white,
+                color: isDarkMode ? black : white,
                 size: widget.loadingSize ?? 30,
               )
             : Text(

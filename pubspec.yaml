@@ -19,7 +19,8 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 version: 1.0.0+1
 
 environment:
-  sdk: ^3.5.3
+  sdk: '>=3.4.3 <4.0.0'  
+  #initially:^3.5.3
 
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
@@ -51,7 +52,6 @@ dependencies:
   readmore: ^3.0.0
   model_viewer_plus: ^1.9.0
   file_picker: ^10.1.9
-  flutter_stripe: ^11.3.0
   flutter_svg: ^2.0.17
   firebase_messaging: ^15.2.1
   flutter_local_notifications: ^18.0.1
@@ -79,6 +79,9 @@ dependencies:
   geolocator: ^13.0.4
   geolocator_android: 4.6.1
   geocoding: ^4.0.0
+  currency_converter: ^2.0.0
+  flutter_stripe: ^10.0.0
+  # stripe_platform_interface: ^9.4.0
 
 dev_dependencies:
   flutter_test:
