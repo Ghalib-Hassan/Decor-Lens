@@ -43,4 +43,4 @@ app.*.map.json
 /android/app/release
 lib/extra.dart
 lib/app_constants.dart
-
+.env
