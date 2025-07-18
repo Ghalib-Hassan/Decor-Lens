@@ -102,14 +102,14 @@ class _FavouriteScreenState extends State<FavouriteScreen> {
                           children: [
                             Image.asset(
                               'assets/images/no-favorites.png',
-                              width: 200,
+                              width: ScreenSize.screenWidth * 0.3,
                             ),
                             const SizedBox(height: 20),
                             Text(
                               "No favorite items found",
                               style: GoogleFonts.manrope(
                                   color: isDarkMode ? white : black,
-                                  fontSize: 18,
+                                  fontSize: ScreenSize.screenHeight * 0.017,
                                   fontWeight: FontWeight.bold),
                             ),
                           ],

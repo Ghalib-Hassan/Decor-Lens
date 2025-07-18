@@ -4,7 +4,7 @@ import 'package:decor_lens/Provider/dark_mode_provider.dart';
 import 'package:decor_lens/Utils/colors.dart';
 import 'package:decor_lens/Widgets/appbar.dart';
 import 'package:decor_lens/Widgets/custom_button.dart';
-import 'package:decor_lens/Widgets/snackbar.dart';
+import 'package:decor_lens/Widgets/snackbar_messages.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -559,13 +559,7 @@ class _UserCommentsState extends State<UserComments> {
 
                 if (nameController.text.trim().isEmpty ||
                     reviewController.text.trim().isEmpty) {
-                  customSnackbar(
-                    title: 'Error',
-                    message: 'Fields should not be empty',
-                    titleColor: red,
-                    icon: Icons.error_outline,
-                    iconColor: red,
-                  );
+                  SnackbarMessages.emptyFieldsError();
 
                   return;
                 }
@@ -586,23 +580,11 @@ class _UserCommentsState extends State<UserComments> {
                     'product_image': widget.image,
                     // 'fcmToken': userToken, // store FCM token here
                   });
-                  customSnackbar(
-                    title: 'Success',
-                    message: 'Review posted successfully',
-                    titleColor: green,
-                    icon: Icons.check_circle_outline,
-                    iconColor: green,
-                  );
+                  SnackbarMessages.commentPosted();
 
                   Navigator.pop(context);
                 } catch (e) {
-                  customSnackbar(
-                    title: 'Error',
-                    message: 'Failed to post review',
-                    titleColor: red,
-                    icon: Icons.error_outline,
-                    iconColor: red,
-                  );
+                  SnackbarMessages.failedToPostComment();
                 }
               },
               child: Text('Post Review',

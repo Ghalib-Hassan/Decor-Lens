@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:decor_lens/Utils/colors.dart';
-import 'package:decor_lens/Widgets/snackbar.dart';
+import 'package:decor_lens/Widgets/snackbar_messages.dart';
 import 'package:flutter/material.dart';
 
 class Product {
@@ -105,13 +104,7 @@ class HomeProvider extends ChangeNotifier {
       if (doc.exists) {
         await favDocRef.delete();
         _favoriteItemIds.remove(itemId);
-        customSnackbar(
-          title: "Favorite Removed",
-          message: "${itemData['ItemName']} removed from favorites.",
-          titleColor: red,
-          icon: Icons.remove_circle_outline,
-          iconColor: red,
-        );
+        SnackbarMessages.favoriteRemoved(itemData['ItemName']);
       } else {
         final favData = {
           'ItemId': itemId,
@@ -129,24 +122,13 @@ class HomeProvider extends ChangeNotifier {
 
         await favDocRef.set(favData);
         _favoriteItemIds.add(itemId);
-        customSnackbar(
-          title: "Favorite Added",
-          message: "${itemData['ItemName']} added to favorites.",
-          titleColor: green,
-          icon: Icons.check_circle_outline,
-          iconColor: green,
-        );
+        SnackbarMessages.favouriteAdded(itemData['ItemName']);
       }
       notifyListeners();
     } catch (e) {
       print('Error adding to favorites: $e');
-      customSnackbar(
-        title: "Error",
-        message: "Failed to add to favorites.",
-        titleColor: red,
-        icon: Icons.warning_amber_outlined,
-        iconColor: red,
-      );
+
+      SnackbarMessages.failedToAddFavorite();
     }
   }
 }

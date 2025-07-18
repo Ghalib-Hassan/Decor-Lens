@@ -8,7 +8,7 @@ import 'package:decor_lens/Utils/screen_size.dart';
 import 'package:decor_lens/Widgets/admin_product_dimensions.dart';
 import 'package:decor_lens/Widgets/capitalize_first_letter.dart';
 import 'package:decor_lens/Widgets/custom_button.dart';
-import 'package:decor_lens/Widgets/snackbar.dart';
+import 'package:decor_lens/Widgets/snackbar_messages.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -387,12 +387,8 @@ class _ProductScreenState extends State<ProductScreen> {
                       print('custom query ${customItemQuery.docs}');
 
                       if (customItemQuery.docs.isEmpty) {
-                        customSnackbar(
-                            title: 'Customize the product first',
-                            message: 'Please customize the product first',
-                            titleColor: red,
-                            icon: Icons.warning_amber,
-                            iconColor: red);
+                        SnackbarMessages.customizeFirst();
+
                         return;
                       }
 
@@ -410,12 +406,7 @@ class _ProductScreenState extends State<ProductScreen> {
                           customHeight == '0.0' ||
                           customWidth == '0.0' ||
                           customSpace == '0.0') {
-                        customSnackbar(
-                            title: 'Customize the product first',
-                            message: 'Please customize the product first',
-                            titleColor: red,
-                            icon: Icons.warning_amber,
-                            iconColor: red);
+                        SnackbarMessages.customizeFirst();
                         return;
                       }
 
@@ -430,6 +421,8 @@ class _ProductScreenState extends State<ProductScreen> {
 
                       print(
                           '✅ Quantity updated in Firestore: ${provider.quantity}');
+
+                      SnackbarMessages.addToCart();
 
                       await Get.to(
                         () => Cart(initialTabIndex: 1),
@@ -640,18 +633,13 @@ class _ProductScreenState extends State<ProductScreen> {
                             buttonWidth: screenWidth * 0.25,
                             buttonText: 'Add / Update',
                             buttonColor: black,
-                            fonts: GoogleFonts.aDLaMDisplay(color: white),
+                            fonts: GoogleFonts.aDLaMDisplay(
+                                color: white, fontSize: screenHeight * 0.01),
                             onPressed: () async {
                               if (heightController.text.trim().isEmpty ||
                                   widthController.text.trim().isEmpty ||
                                   spaceController.text.trim().isEmpty) {
-                                customSnackbar(
-                                  title: 'Fields required',
-                                  message: 'Please enter all dimensions.',
-                                  titleColor: red,
-                                  icon: Icons.warning_amber,
-                                  iconColor: red,
-                                );
+                                SnackbarMessages.enterAllDimensions();
                                 return;
                               }
 
@@ -677,12 +665,7 @@ class _ProductScreenState extends State<ProductScreen> {
                                   'Space': spaceController.text,
                                 });
 
-                                customSnackbar(
-                                    title: 'Dimensions Updated',
-                                    message: 'Dimensions updated successfully.',
-                                    titleColor: green,
-                                    icon: Icons.check,
-                                    iconColor: green);
+                                SnackbarMessages.dimensionsUpdated();
                               } else {
                                 // Add new custom item
                                 await FirebaseFirestore.instance
@@ -703,12 +686,7 @@ class _ProductScreenState extends State<ProductScreen> {
 
                                 print(
                                     "🟢 Custom item added for $productName with userId: $userId");
-                                customSnackbar(
-                                    title: 'Customization Done',
-                                    message: 'Customization done successfully',
-                                    titleColor: green,
-                                    icon: Icons.check,
-                                    iconColor: green);
+                                SnackbarMessages.customizationDone();
                               }
 
                               setState(() {

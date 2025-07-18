@@ -5,6 +5,7 @@ import 'package:decor_lens/Utils/colors.dart';
 import 'package:decor_lens/Widgets/appbar.dart';
 import 'package:decor_lens/Widgets/custom_button.dart';
 import 'package:decor_lens/Widgets/snackbar.dart';
+import 'package:decor_lens/Widgets/snackbar_messages.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -206,14 +207,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
 
                   await FirebaseAuth.instance.signOut();
                   // Show the toast message only once
-                  customSnackbar(
-                    title: 'Logout Successful 🥹',
-                    message: 'You have been logged out successfully.',
-                    titleColor: green,
-                    messageColor: black,
-                    icon: Icons.check_circle_outline,
-                    iconColor: green,
-                  );
+                  SnackbarMessages.logoutSuccess();
 
                   final darkModeService =
                       Provider.of<DarkModeService>(context, listen: false);
@@ -231,7 +225,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
                 } catch (e) {
                   debugPrint('Logout error: $e');
                   customSnackbar(
-                    title: 'Error',
+                    title: '❗Error',
                     message: 'Error logging out: ${e.toString()}',
                     titleColor: red,
                     messageColor: black,

@@ -12,7 +12,7 @@ import 'package:decor_lens/Utils/colors.dart';
 import 'package:decor_lens/Utils/exit_confirmation.dart';
 import 'package:decor_lens/Utils/screen_size.dart';
 import 'package:decor_lens/Widgets/bottom_navigation_bar.dart';
-import 'package:decor_lens/Widgets/snackbar.dart';
+import 'package:decor_lens/Widgets/snackbar_messages.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -150,13 +150,7 @@ class _MyAccountState extends State<MyAccount> {
 
                     Navigator.of(context).pop(true); // return true
 
-                    customSnackbar(
-                      title: 'Profile Updated',
-                      message: 'Your profile has been updated successfully.',
-                      titleColor: Colors.green,
-                      icon: Icons.check_circle,
-                      iconColor: Colors.green,
-                    );
+                    SnackbarMessages.profileUpdated();
                   },
                 )
               ],
@@ -239,10 +233,12 @@ class _MyAccountState extends State<MyAccount> {
                       top: 140,
                     ),
                     child: FutureBuilder<DocumentSnapshot>(
-                      future: FirebaseFirestore.instance
-                          .collection('Users')
-                          .doc(FirebaseAuth.instance.currentUser!.uid)
-                          .get(),
+                      future: FirebaseAuth.instance.currentUser != null
+                          ? FirebaseFirestore.instance
+                              .collection('Users')
+                              .doc(FirebaseAuth.instance.currentUser!.uid)
+                              .get()
+                          : null,
                       builder: (context, snapshot) {
                         if (!snapshot.hasData) {
                           return const SizedBox(); // Or a shimmer/skeleton
@@ -285,9 +281,6 @@ class _MyAccountState extends State<MyAccount> {
                                     ? NetworkImage(profileUrl)
                                     : AssetImage('assets/images/default.png')
                                         as ImageProvider,
-                                child: profileUrl == null
-                                    ? Icon(Icons.person, size: 35, color: white)
-                                    : null,
                               ).animate().fade(duration: 600.ms).scale(),
                               const SizedBox(width: 10),
                               Expanded(
@@ -426,13 +419,7 @@ class _MyAccountState extends State<MyAccount> {
                           await launchUrl(Uri.parse(url),
                               mode: LaunchMode.externalApplication);
                         } else {
-                          customSnackbar(
-                            title: 'WhatsApp Error',
-                            message: 'Could not open WhatsApp.',
-                            titleColor: Colors.red,
-                            icon: Icons.error,
-                            iconColor: Colors.red,
-                          );
+                          SnackbarMessages.whatsappError();
                         }
                       },
                     ),

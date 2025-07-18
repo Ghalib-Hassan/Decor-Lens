@@ -1,6 +1,7 @@
 import 'package:decor_lens/UI/User%20UI/cart_screen.dart';
 import 'package:decor_lens/Utils/colors.dart';
 import 'package:decor_lens/Widgets/snackbar.dart';
+import 'package:decor_lens/Widgets/snackbar_messages.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -158,13 +159,7 @@ class ProductProvider with ChangeNotifier {
       if (cartItemQuery.docs.isNotEmpty
           // || customItemQuery.docs.isNotEmpty
           ) {
-        customSnackbar(
-          title: 'Product is in the Cart',
-          message: 'Product is already in the cart!',
-          titleColor: orangeAccent,
-          icon: Icons.info_outline,
-          iconColor: orangeAccent,
-        );
+        SnackbarMessages.alreadyInCart();
       } else {
         // else {
         await FirebaseFirestore.instance.collection('Cart Items').add({
@@ -181,13 +176,7 @@ class ProductProvider with ChangeNotifier {
           'Category': category
         });
 
-        customSnackbar(
-          title: 'Product Added',
-          message: 'Product has been added to the cart',
-          titleColor: green,
-          icon: Icons.check,
-          iconColor: green,
-        );
+        SnackbarMessages.addToCart();
 
         await Get.to(
           () => Cart(
@@ -201,7 +190,7 @@ class ProductProvider with ChangeNotifier {
       }
     } catch (e) {
       customSnackbar(
-        title: 'Failed to add',
+        title: '❗Failed to add',
         message: 'Failed to add to cart! $e',
         titleColor: red,
         icon: Icons.error_outline,

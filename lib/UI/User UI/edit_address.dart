@@ -4,7 +4,7 @@ import 'package:decor_lens/Provider/dark_mode_provider.dart';
 import 'package:decor_lens/Utils/colors.dart';
 import 'package:decor_lens/Widgets/appbar.dart';
 import 'package:decor_lens/Widgets/custom_button.dart';
-import 'package:decor_lens/Widgets/snackbar.dart';
+import 'package:decor_lens/Widgets/snackbar_messages.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:geocoding/geocoding.dart';
@@ -115,14 +115,8 @@ class _EditAddressState extends State<EditAddress> {
         nameController.text.isEmpty ||
         phoneController.text.isEmpty ||
         zipCodeController.text.isEmpty) {
-      customSnackbar(
-        title: 'Please fill all fields',
-        message: 'Make sure to select a location and fill in all the details.',
-        titleColor: red,
-        messageColor: black,
-        icon: Icons.error_outline,
-        iconColor: red,
-      );
+      SnackbarMessages.fillAllFieldsError();
+
       setState(() {
         isLoading = false;
       });

@@ -6,7 +6,7 @@ import 'package:decor_lens/Utils/colors.dart';
 import 'package:decor_lens/Utils/screen_size.dart';
 import 'package:decor_lens/Widgets/appbar.dart';
 import 'package:decor_lens/Widgets/custom_button.dart';
-import 'package:decor_lens/Widgets/snackbar.dart';
+import 'package:decor_lens/Widgets/snackbar_messages.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -179,14 +179,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       await stripe.Stripe.instance.presentPaymentSheet();
       await clearCartAfterOrder(); // ✅ Only after successful payment
       setState(() => paymentIntentData = null);
-
-      customSnackbar(
-        title: 'Paid Successfully',
-        message: 'Your order has been paid successfully.',
-        titleColor: green,
-        icon: Icons.check_circle_outline,
-        iconColor: green,
-      );
+      SnackbarMessages.paymentSuccess();
 
       // Navigate to success screen
       Get.to(
@@ -196,22 +189,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       );
     } on stripe.StripeException {
       await deleteOrderOnPaymentFail(orderId); // <--- Delete order on cancel
-      customSnackbar(
-        title: 'Payment Canceled',
-        message: 'You have canceled the payment.',
-        titleColor: blueAccent,
-        icon: Icons.warning_amber,
-        iconColor: blueAccent,
-      );
+
+      SnackbarMessages.paymentCancelled();
     } catch (e) {
       await deleteOrderOnPaymentFail(orderId); // <--- Delete order on error
-      customSnackbar(
-        title: 'Payment Failed',
-        message: 'Unexpected error occurred while processing payment.',
-        titleColor: red,
-        icon: Icons.error_outline,
-        iconColor: red,
-      );
+      SnackbarMessages.paymentFailed();
     }
   }
 
@@ -298,14 +280,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   if (userName.isEmpty ||
                       userAddress.isEmpty ||
                       selectedPaymentMethod == null) {
-                    customSnackbar(
-                      title: 'Error',
-                      message: 'Please fill in all the required fields!',
-                      titleColor: red,
-                      messageColor: black,
-                      icon: Icons.error_outline,
-                      iconColor: red,
-                    );
+                    SnackbarMessages.requiredFieldsError();
 
                     setState(() {
                       placeOrder = false;
@@ -411,12 +386,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   );
                 } catch (e) {
                   // Handle errors
-                  customSnackbar(
-                      title: 'Failed 😞',
-                      message: 'Failed to place order. Please try again.',
-                      titleColor: red,
-                      icon: Icons.error_outline,
-                      iconColor: red);
+                  SnackbarMessages.orderFailed();
 
                   setState(() {
                     placeOrder = false;

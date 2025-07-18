@@ -32,12 +32,9 @@ class _UserSignUpState extends State<UserSignUp> {
   signUp() async {
     if (firstNameController.text.isEmpty) {
       customSnackbar(
-        title: 'First Name is required',
+        title: '⚠️ First Name is required',
         message: 'Please enter your first name.',
         titleColor: red,
-        messageColor: red,
-        icon: Icons.warning_amber_rounded,
-        iconColor: red,
       );
       return;
     }

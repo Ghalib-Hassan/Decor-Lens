@@ -7,7 +7,7 @@ import 'package:decor_lens/Utils/exit_confirmation.dart';
 import 'package:decor_lens/Widgets/bottom_navigation_bar.dart';
 import 'package:decor_lens/Widgets/capitalize_first_letter.dart';
 import 'package:decor_lens/Widgets/custom_button.dart';
-import 'package:decor_lens/Widgets/snackbar.dart';
+import 'package:decor_lens/Widgets/snackbar_messages.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -87,13 +87,7 @@ class _CartState extends State<Cart> with SingleTickerProviderStateMixin {
       if ((heightControllers[itemId]?.text.isEmpty ?? true) ||
           (widthControllers[itemId]?.text.isEmpty ?? true) ||
           (spaceControllers[itemId]?.text.isEmpty ?? true)) {
-        customSnackbar(
-          title: 'Enter Dimensions',
-          message: 'Please enter height, width, and space for all items!',
-          titleColor: red,
-          icon: Icons.error_outline,
-          iconColor: red,
-        );
+        SnackbarMessages.enterAllDimensions();
 
         return false;
       }
@@ -472,13 +466,7 @@ class _CartState extends State<Cart> with SingleTickerProviderStateMixin {
 
                         if (cartSnapshot.docs.isEmpty &&
                             customSnapshot.docs.isEmpty) {
-                          customSnackbar(
-                            title: 'Cart Empty',
-                            message: 'Your cart is empty!',
-                            titleColor: red,
-                            icon: Icons.error_outline,
-                            iconColor: red,
-                          );
+                          SnackbarMessages.cartEmpty();
 
                           setState(() {
                             isLoading = false;
@@ -692,14 +680,7 @@ class _CartState extends State<Cart> with SingleTickerProviderStateMixin {
                       .collection('Cart Items')
                       .doc(item.id)
                       .delete();
-
-                  customSnackbar(
-                    title: 'Item Removed',
-                    message: 'Item removed from cart',
-                    titleColor: blueAccent,
-                    icon: Icons.error_outline,
-                    iconColor: blueAccent,
-                  );
+                  SnackbarMessages.removeFromCart();
 
                   fetchAllItemsAndCalculateTotal();
                 },
@@ -888,13 +869,7 @@ class _CartState extends State<Cart> with SingleTickerProviderStateMixin {
                           .delete();
 
                       print('snackbar');
-                      customSnackbar(
-                        title: 'Item Removed',
-                        message: 'Item removed from cart',
-                        titleColor: blueAccent,
-                        icon: Icons.error_outline,
-                        iconColor: blueAccent,
-                      );
+                      SnackbarMessages.removeFromCart();
 
                       // Get.back(result: {'reset': true});
                       fetchAllItemsAndCalculateTotal();

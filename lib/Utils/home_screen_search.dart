@@ -197,10 +197,9 @@ class _HomeScreenSearchState extends State<HomeScreenSearch> {
                               child: Text(
                                 capitalizeFirstLetter(item['ItemName']),
                                 style: GoogleFonts.nunitoSans(
-                                  fontWeight: FontWeight.w600,
-                                  color: isDarkMode ? grey : black,
-                                  fontSize: screenHeight * 0.014,
-                                ),
+                                    fontWeight: FontWeight.w600,
+                                    color: isDarkMode ? grey : black,
+                                    fontSize: screenHeight * 0.012),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -211,10 +210,9 @@ class _HomeScreenSearchState extends State<HomeScreenSearch> {
                               child: Text(
                                 'Rs ${item['ItemPrice']}',
                                 style: GoogleFonts.nunitoSans(
-                                  fontWeight: FontWeight.bold,
-                                  color: isDarkMode ? white : black,
-                                  fontSize: 14,
-                                ),
+                                    fontWeight: FontWeight.bold,
+                                    color: isDarkMode ? white : black,
+                                    fontSize: screenHeight * 0.012),
                               ),
                             ),
                           ],

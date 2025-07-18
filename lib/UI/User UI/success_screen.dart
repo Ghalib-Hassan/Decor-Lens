@@ -25,15 +25,18 @@ class SuccessOrder extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 48),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Icon(Icons.check_circle_rounded, size: 100, color: green),
               SizedBox(height: 20),
-              Text(
-                "Order Placed Successfully!",
-                style: GoogleFonts.manrope(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: isDarkMode ? white : black,
+              Center(
+                child: Text(
+                  "Order Placed Successfully!",
+                  style: GoogleFonts.manrope(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: isDarkMode ? white : black,
+                  ),
                 ),
               ),
               SizedBox(height: 10),

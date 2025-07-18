@@ -1,9 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:decor_lens/UI/Auth%20Screens/user_verification.dart';
 import 'package:decor_lens/UI/User%20UI/home_screen.dart';
 import 'package:decor_lens/Utils/colors.dart';
 import 'package:decor_lens/Widgets/custom_button.dart';
 import 'package:decor_lens/Widgets/email_text_field.dart';
 import 'package:decor_lens/Widgets/snackbar.dart';
+import 'package:decor_lens/Widgets/snackbar_messages.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
@@ -11,6 +13,7 @@ import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -31,70 +34,34 @@ class AuthService {
           phoneNumber.isEmpty ||
           password.isEmpty ||
           confirmPassword.isEmpty) {
-        customSnackbar(
-          title: 'Incomplete Information',
-          message: 'Please ensure all required fields are filled out.',
-          titleColor: red,
-          icon: Icons.warning_amber_rounded,
-          iconColor: red,
-        );
+        SnackbarMessages.incompleteInfo();
         onError();
         return;
       }
 
       if (password.length < 6) {
-        customSnackbar(
-          title: 'Weak Password',
-          message: 'Password must be at least 6 characters long.',
-          titleColor: red,
-          icon: Icons.lock_outline,
-          iconColor: red,
-        );
-
+        SnackbarMessages.weakPassword();
         onError();
         return;
       }
 
       if (password != confirmPassword) {
-        customSnackbar(
-          title: 'Password Mismatch',
-          message: 'The entered passwords do not match. Please try again.',
-          titleColor: red,
-          icon: Icons.sync_problem_rounded,
-          iconColor: red,
-        );
-
+        SnackbarMessages.passwordMismatch();
         onError();
         return;
       }
 
       if (!RegExp(r'^[0-9]+$').hasMatch(phoneNumber) ||
           phoneNumber.length != 10) {
-        customSnackbar(
-          title: 'Invalid Phone Number',
-          message: 'Please enter a valid 10-digit phone number.',
-          titleColor: red,
-          icon: Icons.phone_android_outlined,
-          iconColor: red,
-        );
-
+        SnackbarMessages.invalidPhoneNumber();
         onError();
         return;
       }
 
       QuerySnapshot querySnapshot =
           await _db.collection('Users').where('Email', isEqualTo: email).get();
-
       if (querySnapshot.docs.isNotEmpty) {
-        customSnackbar(
-          title: 'Email Already Registered',
-          message:
-              'The provided email address is already associated with an existing account.',
-          titleColor: red,
-          icon: Icons.email_outlined,
-          iconColor: red,
-        );
-
+        SnackbarMessages.emailAlreadyRegistered();
         onError();
         return;
       }
@@ -105,39 +72,32 @@ class AuthService {
         password: password,
       );
 
-      await userCredential.user?.updateDisplayName(name);
-      await userCredential.user
-          ?.reload(); // optional but ensures latest user info
+      User? user = userCredential.user;
+      if (user != null) {
+        await user.updateDisplayName(name);
+        await user.sendEmailVerification();
+        await user.reload();
 
-      String? uid = userCredential.user?.uid;
-
-      if (uid != null) {
-        await _db.collection('Users').doc(uid).set({
+        await _db.collection('Users').doc(user.uid).set({
           'Name': name,
           'Email': email,
           'Password': password,
           'Phone_number': '+92$phoneNumber',
-          'User_id': uid,
+          'User_id': user.uid,
           'Profile_picture': null,
           'is_blocked': false,
         });
 
-        debugPrint('phone number $phoneNumber');
+        // ✅ Save flag using SharedPreferences
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool('isAwaitingVerification', true);
 
-        customSnackbar(
-          title: 'Account Created',
-          message: 'Your account has been registered successfully.',
-          titleColor: green,
-          icon: Icons.check_circle_outline,
-          iconColor: green,
+        // ✅ Navigate to email verification screen
+        Get.offAll(
+          UserEmailVerification(email: email),
+          transition: Transition.fade,
+          duration: const Duration(milliseconds: 600),
         );
-
-        // Get.offAll(
-        //   EmailVerification(phoneNumber: phoneNumber),
-        //   transition: Transition.fade,
-        //   duration: const Duration(milliseconds: 600),
-        // );
-        onSuccess();
       }
     } catch (e) {
       String errorMessage = 'An error occurred';
@@ -146,15 +106,15 @@ class AuthService {
       } else if (e.toString().contains('weak-password')) {
         errorMessage = 'The password is too weak';
       }
-      customSnackbar(
-          title: 'Error',
-          titleColor: red,
-          message: errorMessage,
-          icon: Icons.error_outline,
-          iconColor: red);
 
+      customSnackbar(
+        title: 'Error',
+        titleColor: red,
+        message: errorMessage,
+        icon: Icons.error_outline,
+        iconColor: red,
+      );
       onError();
-      return;
     }
   }
 
@@ -166,13 +126,8 @@ class AuthService {
   }) async {
     try {
       if (email.isEmpty || password.isEmpty) {
-        customSnackbar(
-          title: 'Incomplete Information',
-          message: 'Please enter both email and password.',
-          titleColor: red,
-          icon: Icons.warning_amber_rounded,
-          iconColor: red,
-        );
+        SnackbarMessages.incompleteInfo();
+
         onError();
         return;
       }
@@ -184,13 +139,8 @@ class AuthService {
           .get();
 
       if (querySnapshot.docs.isEmpty) {
-        customSnackbar(
-          title: 'No User Found',
-          message: 'No user found with this email.',
-          titleColor: red,
-          icon: Icons.warning_amber_rounded,
-          iconColor: red,
-        );
+        SnackbarMessages.noUserFound();
+
         onError();
         return;
       }
@@ -205,26 +155,16 @@ class AuthService {
 
       // ❌ Blocked user check (BEFORE password check)
       if (isBlocked) {
-        customSnackbar(
-          title: 'Account Blocked',
-          message: 'Your account has been blocked.',
-          titleColor: red,
-          icon: Icons.block,
-          iconColor: red,
-        );
+        SnackbarMessages.accountBlocked();
+
         onError();
         return;
       }
 
       // 🔍 Compare entered password with stored password
       if (storedPassword != password.trim()) {
-        customSnackbar(
-          title: 'Incorrect Password',
-          message: 'The password you entered is incorrect.',
-          titleColor: red,
-          icon: Icons.lock_outline,
-          iconColor: red,
-        );
+        SnackbarMessages.incorrectPassword();
+
         onError();
         return;
       }
@@ -234,6 +174,24 @@ class AuthService {
         email: email,
         password: password,
       );
+
+      final user = userCredential.user;
+
+      if (user != null && !user.emailVerified) {
+        // Delete user from Firestore
+        await FirebaseFirestore.instance
+            .collection('Users')
+            .doc(user.uid)
+            .delete();
+
+        // Delete FirebaseAuth account
+        await user.delete();
+
+        // Show snackbar
+        SnackbarMessages.accountNotVerified();
+        onError();
+        return;
+      }
 
       // ✅ Fetch the FCM token
       // String? fcmToken = await FirebaseMessaging.instance.getToken();
@@ -252,13 +210,8 @@ class AuthService {
       });
 
       if (userCredential.user != null) {
-        customSnackbar(
-          title: 'Login Successful',
-          message: 'You have successfully signed in.',
-          titleColor: green,
-          icon: Icons.check_circle_outline,
-          iconColor: green,
-        );
+        // After successful login
+        SnackbarMessages.loginSuccess();
         Get.offAll(() => HomeScreen(),
             transition: Transition.circularReveal,
             duration: const Duration(seconds: 2));
@@ -275,7 +228,7 @@ class AuthService {
       }
 
       customSnackbar(
-        title: 'Login Failed',
+        title: '😞 Login Failed',
         message: errorMessage,
         titleColor: red,
         icon: Icons.error_outline,
@@ -284,13 +237,8 @@ class AuthService {
       onError();
       return;
     } catch (e) {
-      customSnackbar(
-        title: 'Login Failed',
-        message: 'Something went wrong. Please try again.',
-        titleColor: red,
-        icon: Icons.error_outline,
-        iconColor: red,
-      );
+      SnackbarMessages.loginFailed();
+
       onError();
       return;
     }
@@ -300,13 +248,8 @@ class AuthService {
     try {
       final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
       if (googleUser == null) {
-        customSnackbar(
-          title: 'Sign-In Cancelled',
-          message: 'Google sign-in was cancelled.',
-          titleColor: red,
-          icon: Icons.cancel,
-          iconColor: red,
-        );
+        SnackbarMessages.googleSignInCancelled();
+
         return; // User canceled the sign-in
       }
 
@@ -332,13 +275,8 @@ class AuthService {
           bool isBlocked = docSnapshot['is_blocked'] ?? false;
 
           if (isBlocked) {
-            customSnackbar(
-              title: 'Blocked Account',
-              message: 'Your account has been blocked.',
-              titleColor: red,
-              icon: Icons.block,
-              iconColor: red,
-            );
+            SnackbarMessages.accountBlocked();
+
             await FirebaseAuth.instance.signOut();
 
             return;
@@ -373,13 +311,8 @@ class AuthService {
         });
 
         // Navigation (optional)
-        customSnackbar(
-          title: 'Login Successful',
-          message: 'You have successfully signed in with Google.',
-          titleColor: green,
-          icon: Icons.check_circle_outline,
-          iconColor: green,
-        );
+        // After successful login
+        SnackbarMessages.googleLoginSuccess();
         await FirebaseMessaging.instance.subscribeToTopic('all_users');
 
         Get.offAll(
@@ -391,13 +324,8 @@ class AuthService {
     } catch (e) {
       debugPrint("Error in loginWithGoogle: ${e.toString()}");
 
-      customSnackbar(
-        title: 'Login Failed',
-        message: 'Something went wrong. Please try again.',
-        titleColor: red,
-        icon: Icons.error_outline,
-        iconColor: red,
-      );
+      SnackbarMessages.loginFailed();
+
       return;
     }
   }
@@ -407,13 +335,8 @@ class AuthService {
       final LoginResult loginResult = await FacebookAuth.instance.login();
 
       if (loginResult.status != LoginStatus.success) {
-        customSnackbar(
-          title: 'Sign-In Cancelled',
-          message: 'Facebook sign-in was cancelled.',
-          titleColor: red,
-          icon: Icons.cancel,
-          iconColor: red,
-        );
+        SnackbarMessages.facebookSignInCancelled();
+
         return;
       }
 
@@ -435,13 +358,8 @@ class AuthService {
           bool isBlocked = docSnapshot['is_blocked'] ?? false;
 
           if (isBlocked) {
-            customSnackbar(
-              title: 'Blocked Account',
-              message: 'Your account has been blocked.',
-              titleColor: red,
-              icon: Icons.block,
-              iconColor: red,
-            );
+            SnackbarMessages.accountBlocked();
+
             await FirebaseAuth.instance.signOut();
             return;
           }
@@ -478,13 +396,8 @@ class AuthService {
         await FirebaseMessaging.instance.subscribeToTopic('all_users');
 
         // Navigate
-        customSnackbar(
-          title: 'Login Successful',
-          message: 'You have successfully signed in with Facebook.',
-          titleColor: green,
-          icon: Icons.check_circle_outline,
-          iconColor: green,
-        );
+        // After successful login
+        SnackbarMessages.facebookLoginSuccess();
 
         Get.offAll(
           () => HomeScreen(),
@@ -508,7 +421,7 @@ class AuthService {
         }
 
         customSnackbar(
-          title: 'Account Exists',
+          title: '⚠️ Account Exists',
           message:
               'This email is already registered using $methodMessage. Please sign in using that method.',
           titleColor: red,
@@ -517,7 +430,7 @@ class AuthService {
         );
       } else {
         customSnackbar(
-          title: 'Login Failed',
+          title: '❗Login Failed',
           message: 'Something went wrong: ${e.message}',
           titleColor: red,
           icon: Icons.error_outline,
@@ -527,13 +440,7 @@ class AuthService {
     } catch (e) {
       debugPrint("Error in loginWithFacebook: ${e.toString()}");
 
-      customSnackbar(
-        title: 'Login Failed',
-        message: 'Something went wrong. Please try again.',
-        titleColor: red,
-        icon: Icons.error_outline,
-        iconColor: red,
-      );
+      SnackbarMessages.loginFailed();
     }
   }
 
@@ -624,13 +531,8 @@ class AuthService {
                                     emailController.text.trim();
 
                                 if (email.isEmpty) {
-                                  customSnackbar(
-                                    title: "Missing Email",
-                                    message: "Please enter your email.",
-                                    titleColor: red,
-                                    icon: Icons.email_outlined,
-                                    iconColor: red,
-                                  );
+                                  SnackbarMessages.missingEmail();
+
                                   return;
                                 }
 
@@ -645,39 +547,21 @@ class AuthService {
 
                                   if (querySnapshot.docs.isEmpty) {
                                     setState(() => isLoading = false);
-                                    customSnackbar(
-                                      title: "No Account Found",
-                                      message:
-                                          "No user registered with this email.",
-                                      titleColor: red,
-                                      icon: Icons.warning_amber_rounded,
-                                      iconColor: red,
-                                    );
+                                    SnackbarMessages.noUserFound();
+
                                     return;
                                   }
 
                                   await _auth.sendPasswordResetEmail(
                                       email: email);
-                                  customSnackbar(
-                                    title: "Success",
-                                    message:
-                                        "Reset link sent! Check your inbox.",
-                                    titleColor: green,
-                                    icon: Icons.mark_email_read_outlined,
-                                    iconColor: green,
-                                  );
+                                  SnackbarMessages.resetLinkSuccess();
+
                                   setState(() => isLoading = false);
 
                                   Navigator.pop(context);
                                 } catch (e) {
-                                  customSnackbar(
-                                    title: "Error",
-                                    message:
-                                        "Failed to send reset link. Try again.",
-                                    titleColor: red,
-                                    icon: Icons.error_outline,
-                                    iconColor: red,
-                                  );
+                                  SnackbarMessages.resetLinkFailed();
+
                                   setState(() => isLoading = false);
                                 } finally {
                                   setState(() => isLoading = false);
