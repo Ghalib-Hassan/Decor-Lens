@@ -81,6 +81,8 @@ dependencies:
   geocoding: ^4.0.0
   currency_converter: ^2.0.0
   flutter_stripe: ^10.0.0
+  googleapis_auth: ^1.6.0
+
   # stripe_platform_interface: ^9.4.0
 
 dev_dependencies:

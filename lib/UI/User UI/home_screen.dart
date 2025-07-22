@@ -1,3 +1,5 @@
+import 'package:decor_lens/Services/get_server_key.dart';
+import 'package:decor_lens/Services/notification_services.dart';
 import 'package:decor_lens/Utils/exit_confirmation.dart';
 import 'package:decor_lens/Utils/home_screen_search.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -25,18 +27,22 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  NotificationService notificationService = NotificationService();
   final HomeProvider productProvider = HomeProvider();
   int selectedCategoryIndex = 0;
 
   @override
   void initState() {
     super.initState();
+    notificationService.requestNotificationPermission();
+    notificationService.getDeviceToken();
+    notificationService.firebaseInit(context);
+    notificationService.setupInteractMessage(context);
     final userId = FirebaseAuth.instance.currentUser?.uid;
     if (userId != null) {
       Provider.of<HomeProvider>(context, listen: false).loadFavorites(userId);
       Provider.of<HomeProvider>(context, listen: false).isFavorite(userId);
     }
-
     productProvider.fetchProducts("Popular");
   }
 
@@ -115,9 +121,12 @@ class _HomeScreenState extends State<HomeScreen> {
                         icon: Icon(Icons.notifications_none,
                             size: 26,
                             color: isDarkMode ? white : Colors.black87),
-                        onPressed: () {
-                          Navigator.push(context,
-                              MaterialPageRoute(builder: (_) => MyAccount()));
+                        onPressed: () async {
+                          GetServerKey getServerKey = GetServerKey();
+                          String accesstoken = await getServerKey
+                              .getServerKeyToken(); // Navigator.push(context,
+                          print(accesstoken);
+                          //     MaterialPageRoute(builder: (_) => MyAccount()));
                         },
                       ),
                     ),

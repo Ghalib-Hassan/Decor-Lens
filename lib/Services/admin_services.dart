@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:decor_lens/Services/send_notification_service.dart';
 import 'package:decor_lens/Utils/colors.dart';
 import 'package:decor_lens/Widgets/capitalize_first_letter.dart';
 import 'package:decor_lens/Widgets/snackbar.dart';
@@ -11,63 +12,11 @@ import 'package:http/http.dart' as http;
 class AdminItemService {
   final FirebaseFirestore db = FirebaseFirestore.instance;
 
-  Future<List<String>> fetchAllFCMTokens() async {
-    List<String> tokens = [];
-
-    QuerySnapshot snapshot =
-        await FirebaseFirestore.instance.collection('LoggedInUsers').get();
-    for (var doc in snapshot.docs) {
-      String? token = doc['fcm_token'];
-      if (token != null && token.isNotEmpty) {
-        tokens.add(token);
-      }
-    }
-
-    return tokens;
-  }
-
-  Future<void> sendNotificationToAllUsers({
-    required String title,
-    required String body,
-    required List<String> tokens,
-  }) async {
-    const String serverKey =
-        'a84f5e83085e6acb8db573a22739432e7a4dc314a72c6d3001fb937f0f6142ad278aebd4c708b8a3'; // Replace with your Firebase server key
-    const String fcmUrl = 'https://fcm.googleapis.com/fcm/send';
-
-    for (String token in tokens) {
-      var notificationData = {
-        "to": token,
-        "notification": {
-          "title": title,
-          "body": body,
-          "sound": "default",
-        },
-        "data": {
-          "click_action": "FLUTTER_NOTIFICATION_CLICK",
-          "id": "1",
-          "status": "done",
-        },
-      };
-
-      await http.post(
-        Uri.parse(fcmUrl),
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "key=$serverKey",
-        },
-        body: jsonEncode(notificationData),
-      );
-      print('sended');
-    }
-  }
-
   Future<void> addItem({
     required String itemName,
     required String category,
     required String itemDescription,
     required String itemPrice,
-    required String deliveryPrice,
     required List<File?> images,
     required File? glbFile,
     required String height,
@@ -129,23 +78,11 @@ class AdminItemService {
         'ItemDescription': itemDescription,
         'ItemPrice': itemPrice,
         'Images': imageUrls,
-        'Model': modelUrl!.isEmpty ? null : modelUrl,
+        'Model': modelUrl ?? '',
         'Height': height,
         'Width': width,
         'Space': space,
-        'Delivery_amount': deliveryPrice,
       });
-
-      // Fetch all logged-in users' FCM tokens
-      print('sending');
-      // List<String> tokens = await fetchAllFCMTokens();
-
-      // // Send push notification
-      // await sendNotificationToAllUsers(
-      //   title: "New Item Added!",
-      //   body: "${itemName.text.trim()} is now available. Check it out!",
-      //   tokens: tokens,
-      // );
 
       customSnackbar(
         title: 'Success',
@@ -159,46 +96,13 @@ class AdminItemService {
 
       Navigator.pop(context);
 
-      //  SendNotificationService.sendNotificationUsingApi(
-      //   topic: "all",
-      //                         title: " New Item added",
-      //                         body: "notify body",
-      //                         data: {'screens': 'cart'});
-      // Future<List<String>> fetchAllFCMTokens() async {
-      //   QuerySnapshot usersSnapshot =
-      //       await FirebaseFirestore.instance.collection('LoggedIn Users').get();
-
-      //   List<String> tokens = [];
-
-      //   for (var doc in usersSnapshot.docs) {
-      //     var data = doc.data() as Map<String, dynamic>;
-      //     if (data.containsKey('fcm_Token')) {
-      //       tokens.add(data['fcmToken']);
-      //     }
-      //   }
-
-      //   return tokens;
-      // }
-
-      // Fetch all logged-in users' FCM tokens
-      // ignore: unused_local_variable
-      // List<String> tokens = await fetchAllFCMTokens();
-
-      // Send notification to each token
-      // for (String token in tokens) {
-      // await SendNotificationService.sendNotificationUsingApi(
-      //   // token: token,
-      //   topic: 'all',
-      //   title: "New Item Added!",
-      //   body: "${itemName.text.trim()} is now available. Check it out!",
-      //   data: {'screen': 'ProductScreen'},
-      // );
-
-      // await saveNotificationToFirestore("New Item Added!",
-      //     "${itemName.text.trim()} is now available. Check it out!");
-
-      print('notification sent');
-      // }
+      await SendNotificationService.sendNotificationUsingApi(
+        // token: token,
+        topic: 'all_users',
+        title: "New Item Added!",
+        body: "${itemName.trim()} is now available. Check it out!",
+        data: {'screen': 'notification'},
+      );
     } catch (e) {
       customSnackbar(
         title: 'Error',
@@ -216,7 +120,6 @@ class AdminItemService {
     required String itemName,
     required String itemDescription,
     required String itemPrice,
-    required String deliveryPrice,
     required List<File?> images,
     required File? glbFile,
     required BuildContext context,
@@ -275,23 +178,11 @@ class AdminItemService {
         'ItemDescription': itemDescription,
         'ItemPrice': itemPrice,
         'Images': imageUrls,
-        'Model': modelUrl,
+        'Model': modelUrl ?? '',
         'Height': "", // Store dimensions for 3D model
         'Width': "", // Store dimensions for 3D model
         'Space': "", // Store dimensions for 3D model
-        'Delivery_amount': deliveryPrice,
       });
-
-      // Fetch all logged-in users' FCM tokens
-      print('sending');
-      // List<String> tokens = await fetchAllFCMTokens();
-
-      // // Send push notification
-      // await sendNotificationToAllUsers(
-      //   title: "New Item Added!",
-      //   body: "${itemName.text.trim()} is now available. Check it out!",
-      //   tokens: tokens,
-      // );
 
       customSnackbar(
         title: 'Success',
@@ -305,46 +196,13 @@ class AdminItemService {
 
       Navigator.pop(context);
 
-      //  SendNotificationService.sendNotificationUsingApi(
-      //   topic: "all",
-      //                         title: " New Item added",
-      //                         body: "notify body",
-      //                         data: {'screens': 'cart'});
-      // Future<List<String>> fetchAllFCMTokens() async {
-      //   QuerySnapshot usersSnapshot =
-      //       await FirebaseFirestore.instance.collection('LoggedIn Users').get();
-
-      //   List<String> tokens = [];
-
-      //   for (var doc in usersSnapshot.docs) {
-      //     var data = doc.data() as Map<String, dynamic>;
-      //     if (data.containsKey('fcm_Token')) {
-      //       tokens.add(data['fcmToken']);
-      //     }
-      //   }
-
-      //   return tokens;
-      // }
-
-      // Fetch all logged-in users' FCM tokens
-      // ignore: unused_local_variable
-      // List<String> tokens = await fetchAllFCMTokens();
-
-      // Send notification to each token
-      // for (String token in tokens) {
-      // await SendNotificationService.sendNotificationUsingApi(
-      //   // token: token,
-      //   topic: 'all',
-      //   title: "New Item Added!",
-      //   body: "${itemName.text.trim()} is now available. Check it out!",
-      //   data: {'screen': 'ProductScreen'},
-      // );
-
-      // await saveNotificationToFirestore("New Item Added!",
-      //     "${itemName.text.trim()} is now available. Check it out!");
-
-      print('notification sent');
-      // }
+      await SendNotificationService.sendNotificationUsingApi(
+        // token: token,
+        topic: 'all_users',
+        title: "New Item Added!",
+        body: "${itemName.trim()} is now available. Check it out!",
+        data: {'screen': 'notification'},
+      );
     } catch (e) {
       customSnackbar(
         title: 'Error',

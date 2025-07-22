@@ -21,7 +21,6 @@ class AddCustomizableItem extends StatefulWidget {
 class _AddCustomizableItemState extends State<AddCustomizableItem> {
   TextEditingController itemDescription = TextEditingController();
   TextEditingController itemPrice = TextEditingController();
-  TextEditingController itemDeliveryPrice = TextEditingController();
   TextEditingController itemName = TextEditingController();
 
   bool isLoading = false;
@@ -93,7 +92,6 @@ class _AddCustomizableItemState extends State<AddCustomizableItem> {
     String name = itemName.text.trim();
 
     if (itemName.text.isEmpty ||
-        itemDeliveryPrice.text.isEmpty ||
         itemDescription.text.isEmpty ||
         itemPrice.text.isEmpty ||
         images[0] == null) {
@@ -136,7 +134,6 @@ class _AddCustomizableItemState extends State<AddCustomizableItem> {
         itemName: itemName.text.trim(),
         itemDescription: itemDescription.text.trim(),
         itemPrice: itemPrice.text.trim(),
-        deliveryPrice: itemDeliveryPrice.text.trim(),
         images: images,
         glbFile: glbFile,
         context: context,
@@ -290,8 +287,6 @@ class _AddCustomizableItemState extends State<AddCustomizableItem> {
                       itemDescription, 'Item Description', screenHeight,
                       maxLines: 3),
                   buildPriceField(itemPrice, 'Item Price', screenHeight),
-                  buildPriceField(
-                      itemDeliveryPrice, 'Delivery Price', screenHeight),
 
                   SizedBox(height: screenHeight * 0.05),
 

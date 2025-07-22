@@ -22,7 +22,6 @@ class AddItemScreen extends StatefulWidget {
 class _AddItemScreenState extends State<AddItemScreen> {
   TextEditingController itemDescription = TextEditingController();
   TextEditingController itemPrice = TextEditingController();
-  TextEditingController itemDeliveryPrice = TextEditingController();
   TextEditingController itemName = TextEditingController();
   final TextEditingController heightController = TextEditingController();
   final TextEditingController widthController = TextEditingController();
@@ -113,7 +112,6 @@ class _AddItemScreenState extends State<AddItemScreen> {
     String name = itemName.text.trim();
 
     if (name.isEmpty ||
-        itemDeliveryPrice.text.isEmpty ||
         itemDescription.text.isEmpty ||
         itemPrice.text.isEmpty ||
         categorySelection == null ||
@@ -162,7 +160,6 @@ class _AddItemScreenState extends State<AddItemScreen> {
         category: categorySelection!,
         itemDescription: itemDescription.text.trim(),
         itemPrice: itemPrice.text.trim(),
-        deliveryPrice: itemDeliveryPrice.text.trim(),
         images: images,
         glbFile: glbFile,
         height: height,
@@ -332,8 +329,6 @@ class _AddItemScreenState extends State<AddItemScreen> {
                       itemDescription, 'Item Description', screenHeight,
                       maxLines: 3),
                   buildPriceField(itemPrice, 'Item Price', screenHeight),
-                  buildPriceField(
-                      itemDeliveryPrice, 'Delivery Price', screenHeight),
 
                   SizedBox(height: screenHeight * 0.05),
 

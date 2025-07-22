@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:decor_lens/Services/notification_services.dart';
 import 'package:decor_lens/UI/Auth%20Screens/user_verification.dart';
 import 'package:decor_lens/UI/User%20UI/home_screen.dart';
 import 'package:decor_lens/Utils/colors.dart';
@@ -156,7 +157,6 @@ class AuthService {
       // ❌ Blocked user check (BEFORE password check)
       if (isBlocked) {
         SnackbarMessages.accountBlocked();
-
         onError();
         return;
       }
@@ -164,7 +164,6 @@ class AuthService {
       // 🔍 Compare entered password with stored password
       if (storedPassword != password.trim()) {
         SnackbarMessages.incorrectPassword();
-
         onError();
         return;
       }
@@ -193,8 +192,9 @@ class AuthService {
         return;
       }
 
+      NotificationService notificationService = NotificationService();
       // ✅ Fetch the FCM token
-      // String? fcmToken = await FirebaseMessaging.instance.getToken();
+      String? fcmToken = await notificationService.getDeviceToken();
 
       // 🔥 Store user data in "LoggedIn Users" collection
       await FirebaseFirestore.instance
@@ -204,10 +204,13 @@ class AuthService {
         'User_id': userUid,
         'name': userName,
         'email': userEmail,
-        // 'fcmToken': fcmToken,
+        'fcmToken': fcmToken,
         'logged_in_at': FieldValue.serverTimestamp(),
         'logged_in_with': 'Email',
       });
+
+      // Subscribe to topic (optional)
+      await FirebaseMessaging.instance.subscribeToTopic('all_users');
 
       if (userCredential.user != null) {
         // After successful login
@@ -295,7 +298,8 @@ class AuthService {
         }
 
         // Get FCM Token
-        // String fcmToken = await NotificationService().getDeviceToken();
+        NotificationService notificationService = NotificationService();
+        String fcmToken = await notificationService.getDeviceToken();
 
         // Store user data in "LoggedIn Users" collection
         await FirebaseFirestore.instance
@@ -304,13 +308,15 @@ class AuthService {
             .set({
           'name': user.displayName ?? "No Name",
           'email': user.email,
-          // 'fcm_token': fcmToken,
+          'fcm_token': fcmToken,
           'logged_in_at': FieldValue.serverTimestamp(), // Timestamp of login
           'User_id': user.uid,
           'logged_in_with': 'Google',
         });
 
-        // Navigation (optional)
+        // Subscribe to topic (optional)
+        await FirebaseMessaging.instance.subscribeToTopic('all_users');
+
         // After successful login
         SnackbarMessages.googleLoginSuccess();
         await FirebaseMessaging.instance.subscribeToTopic('all_users');
@@ -377,7 +383,8 @@ class AuthService {
         }
 
         // Get FCM Token
-        // String fcmToken = await NotificationService().getDeviceToken();
+        NotificationService notificationService = NotificationService();
+        String fcmToken = await notificationService.getDeviceToken();
 
         // Save to LoggedIn Users
         await FirebaseFirestore.instance
@@ -387,7 +394,7 @@ class AuthService {
           'name': user.displayName ?? "No Name",
           'email': user.email ?? "No Email",
           'User_id': user.uid,
-          // 'fcm_token': fcmToken,
+          'fcm_token': fcmToken,
           'logged_in_at': FieldValue.serverTimestamp(),
           'logged_in_with': 'Facebook',
         });
@@ -395,7 +402,6 @@ class AuthService {
         // Subscribe to topic (optional)
         await FirebaseMessaging.instance.subscribeToTopic('all_users');
 
-        // Navigate
         // After successful login
         SnackbarMessages.facebookLoginSuccess();
 

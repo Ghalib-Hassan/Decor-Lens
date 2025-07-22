@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:decor_lens/UI/Admin%20UI/admin_homepage.dart';
 import 'package:decor_lens/UI/Onboarding%20Screens/onboarding_1.dart';
@@ -57,18 +58,42 @@ class _OnboardingServiceState extends State<OnboardingService> {
     }
   }
 
-  void _navigateUser() {
+  void _navigateUser() async {
     final FirebaseAuth auth = FirebaseAuth.instance;
     final User? user = auth.currentUser;
 
     if (user == null || user.displayName == null || user.displayName!.isEmpty) {
       Get.off(() => const OnboardingScreenOne(),
           transition: Transition.fadeIn, duration: const Duration(seconds: 2));
-    } else if (user.email == 'hassanghalib239@gmail.com') {
-      Get.offAll(() => const AdminHomePage(),
-          transition: Transition.circularReveal,
-          duration: const Duration(seconds: 2));
-    } else {
+    }
+
+    try {
+      final adminDoc = await FirebaseFirestore.instance
+          .collection('Admin Credentials')
+          .doc('admin_id') // Use the exact doc ID used in your admin screen
+          .get();
+
+      if (adminDoc.exists) {
+        final adminEmail = adminDoc['email']?.toString().trim();
+
+        if (adminEmail != null && user!.email == adminEmail) {
+          Get.offAll(() => const AdminHomePage(),
+              transition: Transition.circularReveal,
+              duration: const Duration(seconds: 2));
+        } else {
+          Get.offAll(() => HomeScreen(),
+              transition: Transition.circularReveal,
+              duration: const Duration(seconds: 2));
+        }
+      } else {
+        // If admin doc not found, treat user as regular user
+        Get.offAll(() => HomeScreen(),
+            transition: Transition.circularReveal,
+            duration: const Duration(seconds: 2));
+      }
+    } catch (e) {
+      // Handle error and still navigate to user home as fallback
+      debugPrint('Error fetching admin email: $e');
       Get.offAll(() => HomeScreen(),
           transition: Transition.circularReveal,
           duration: const Duration(seconds: 2));

@@ -3,6 +3,7 @@ import 'package:decor_lens/UI/Admin%20UI/add_item.dart';
 import 'package:decor_lens/UI/Admin%20UI/admin_profile.dart';
 import 'package:decor_lens/UI/Admin%20UI/business_card.dart';
 import 'package:decor_lens/UI/Admin%20UI/city_deliveries.dart';
+import 'package:decor_lens/UI/Admin%20UI/notification.dart';
 import 'package:decor_lens/UI/Admin%20UI/view_items.dart';
 import 'package:decor_lens/UI/Admin%20UI/view_users.dart';
 import 'package:decor_lens/UI/Auth%20Screens/user_login.dart';
@@ -197,6 +198,8 @@ class adminOptionCard extends StatelessWidget {
           Get.to(CityDeliveries(), transition: Transition.rightToLeft);
         } else if (option.title == "Admin Profile") {
           Get.to(AdminProfileScreen(), transition: Transition.rightToLeft);
+        } else if (option.title == "Notifications") {
+          Get.to(AdminNotificationScreen(), transition: Transition.rightToLeft);
         }
       },
       child: AnimatedContainer(
