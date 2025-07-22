@@ -44,3 +44,4 @@ app.*.map.json
 lib/extra.dart
 lib/app_constants.dart
 .env
+lib/Services/get_server_key.dart
