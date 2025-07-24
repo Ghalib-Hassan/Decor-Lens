@@ -1,6 +1,6 @@
+import 'package:decor_lens/Services/notification_services.dart';
 import 'package:decor_lens/Services/send_notification_service.dart';
 import 'package:decor_lens/Utils/colors.dart';
-import 'package:decor_lens/Utils/screen_size.dart';
 import 'package:decor_lens/main.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -25,6 +25,9 @@ class _AdminNotificationScreenState extends State<AdminNotificationScreen> {
         .collection('Notifications')
         .orderBy('timestamp', descending: true)
         .snapshots();
+
+    NotificationService notificationService = NotificationService();
+    notificationService.getDeviceToken();
   }
 
   void showNotificationSheet() {
@@ -69,7 +72,9 @@ class _AdminNotificationScreenState extends State<AdminNotificationScreen> {
                     Text(
                       'Title',
                       style: GoogleFonts.poppins(
-                          fontSize: 14, fontWeight: FontWeight.w500),
+                          color: black,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500),
                     ),
                     const SizedBox(height: 8),
                     TextField(
@@ -87,7 +92,9 @@ class _AdminNotificationScreenState extends State<AdminNotificationScreen> {
                     Text(
                       'Body',
                       style: GoogleFonts.poppins(
-                          fontSize: 14, fontWeight: FontWeight.w500),
+                          color: black,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500),
                     ),
                     const SizedBox(height: 8),
                     TextField(
@@ -121,6 +128,7 @@ class _AdminNotificationScreenState extends State<AdminNotificationScreen> {
                               .sendNotificationUsingApi(
                                   title: title,
                                   body: body,
+                                  topic: "all_users",
                                   data: {"screen": 'notification'});
 
                           await saveNotificationToFirestore(title, body);
@@ -233,6 +241,8 @@ class _AdminNotificationScreenState extends State<AdminNotificationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+
     return Theme(
       data: ThemeData.light(),
       child: Scaffold(
@@ -241,7 +251,7 @@ class _AdminNotificationScreenState extends State<AdminNotificationScreen> {
           elevation: 0,
           title: Text('Admin Notifications',
               style: GoogleFonts.poppins(
-                fontSize: ScreenSize.screenHeight * 0.03,
+                fontSize: screenHeight * 0.03,
                 color: white,
                 fontWeight: FontWeight.w600,
               )),

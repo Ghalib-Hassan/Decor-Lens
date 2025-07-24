@@ -9,6 +9,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:get/get.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -26,6 +27,23 @@ Future<void> firebaseBackgroundHandler(RemoteMessage message) async {
 Set<String> notificationIds = {}; // Stores unique notification IDs
 List<Map<String, String>> notifications = [];
 
+final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+    FlutterLocalNotificationsPlugin();
+
+void setupNotificationChannel() async {
+  const AndroidNotificationChannel channel = AndroidNotificationChannel(
+    'default_channel',
+    'Default Notifications',
+    description: 'This channel is used for default notifications.',
+    importance: Importance.high,
+  );
+
+  await flutterLocalNotificationsPlugin
+      .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>()
+      ?.createNotificationChannel(channel);
+}
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   Stripe.publishableKey = AppConstants.stripePublishableKey;
@@ -34,15 +52,17 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
+  setupNotificationChannel(); // 👈 Add
+
   //Handle Foreground Firebase Notifications
   FirebaseMessaging.onMessage.listen((RemoteMessage message) {
     debugPrint("🔔 Foreground Firebase Notification received");
 
     if (message.notification != null) {
-      // String title = message.notification!.title ?? 'No Title';
-      // String body = message.notification!.body ?? 'No Body';
+      String title = message.notification!.title ?? 'No Title';
+      String body = message.notification!.body ?? 'No Body';
 
-      // saveNotificationToFirestore(title, body);
+      saveNotificationToFirestore(title, body);
       debugPrint("Title: ${message.notification!.title}");
       debugPrint("Body: ${message.notification!.body}");
 

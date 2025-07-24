@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:decor_lens/UI/Admin%20UI/admin_homepage.dart';
+import 'package:decor_lens/UI/Auth%20Screens/user_login.dart';
 import 'package:decor_lens/UI/Onboarding%20Screens/onboarding_1.dart';
 import 'package:decor_lens/UI/User%20UI/home_screen.dart';
 import 'package:decor_lens/Utils/colors.dart';
@@ -62,41 +63,63 @@ class _OnboardingServiceState extends State<OnboardingService> {
     final FirebaseAuth auth = FirebaseAuth.instance;
     final User? user = auth.currentUser;
 
-    if (user == null || user.displayName == null || user.displayName!.isEmpty) {
-      Get.off(() => const OnboardingScreenOne(),
-          transition: Transition.fadeIn, duration: const Duration(seconds: 2));
+    // ✅ If not logged in → Show Login Screen
+    if (user == null) {
+      Get.offAll(() => UserLogin(),
+          transition: Transition.fadeIn,
+          duration: const Duration(milliseconds: 800));
+      return;
     }
 
     try {
+      // ✅ Fetch admin email
       final adminDoc = await FirebaseFirestore.instance
           .collection('Admin Credentials')
-          .doc('admin_id') // Use the exact doc ID used in your admin screen
+          .doc('admin_id')
           .get();
 
-      if (adminDoc.exists) {
-        final adminEmail = adminDoc['email']?.toString().trim();
+      final adminEmail = adminDoc['email']?.toString().trim();
 
-        if (adminEmail != null && user!.email == adminEmail) {
-          Get.offAll(() => const AdminHomePage(),
-              transition: Transition.circularReveal,
-              duration: const Duration(seconds: 2));
-        } else {
-          Get.offAll(() => HomeScreen(),
-              transition: Transition.circularReveal,
-              duration: const Duration(seconds: 2));
-        }
-      } else {
-        // If admin doc not found, treat user as regular user
-        Get.offAll(() => HomeScreen(),
+      if (adminEmail != null && user.email == adminEmail) {
+        // ✅ Navigate to Admin Home
+        Get.offAll(() => const AdminHomePage(),
             transition: Transition.circularReveal,
-            duration: const Duration(seconds: 2));
+            duration: const Duration(seconds: 1));
+        return;
       }
+
+      // ✅ Check if it's the user's first time using the app
+      final userDoc = await FirebaseFirestore.instance
+          .collection('Users')
+          .doc(user.uid)
+          .get();
+
+      final isFirstLogin = userDoc['isFirstLogin'] ?? true;
+
+      if (isFirstLogin) {
+        // ✅ Show Onboarding screen once
+        await FirebaseFirestore.instance
+            .collection('Users')
+            .doc(user.uid)
+            .update({'isFirstLogin': false});
+
+        Get.offAll(() => const OnboardingScreenOne(),
+            transition: Transition.fadeIn,
+            duration: const Duration(milliseconds: 800));
+        return;
+      }
+
+      // ✅ Navigate to User Home
+      Get.offAll(() => const HomeScreen(),
+          transition: Transition.fadeIn,
+          duration: const Duration(milliseconds: 800));
     } catch (e) {
-      // Handle error and still navigate to user home as fallback
-      debugPrint('Error fetching admin email: $e');
-      Get.offAll(() => HomeScreen(),
-          transition: Transition.circularReveal,
-          duration: const Duration(seconds: 2));
+      debugPrint('⚠️ Error during navigation: $e');
+
+      // ✅ Safe fallback if something fails
+      Get.offAll(() => const HomeScreen(),
+          transition: Transition.fadeIn,
+          duration: const Duration(milliseconds: 800));
     }
   }
 

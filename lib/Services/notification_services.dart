@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:math';
 import 'package:app_settings/app_settings.dart';
 import 'package:decor_lens/UI/User%20UI/notification_screen.dart';
 import 'package:decor_lens/main.dart';
@@ -68,7 +67,7 @@ class NotificationService {
   void initLocalNotifications(
       BuildContext context, RemoteMessage message) async {
     var androidInitializationSettings =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
+        AndroidInitializationSettings('@mipmap/launcher_icon');
 
     //for IOS
     var iosInitializationSettings = DarwinInitializationSettings();
@@ -92,22 +91,20 @@ class NotificationService {
 
   Future<void> showNotification(RemoteMessage message) async {
     AndroidNotificationChannel channel = AndroidNotificationChannel(
-        Random.secure().nextInt(100000).toString(),
-        'High Importance Notifications',
-        importance: Importance.max,
-        showBadge: true,
-        playSound: true);
+        'default_channel', 'High Importance Notifications',
+        importance: Importance.max, showBadge: true, playSound: true);
 
     AndroidNotificationDetails androidNotificationDetails =
         AndroidNotificationDetails(
-            channel.id.toString(), channel.name.toString(),
-            channelDescription: 'Your channel description',
-            importance: Importance.high,
-            priority: Priority.high,
-            ticker: 'ticker',
-            playSound: true,
-            channelShowBadge: true,
-            sound: channel.sound);
+      channel.id,
+      channel.name,
+      channelDescription: channel.description,
+      importance: Importance.high,
+      priority: Priority.high,
+      playSound: true,
+      channelShowBadge: true,
+      ticker: 'ticker',
+    );
 
     //For IOS
     DarwinNotificationDetails darwinNotificationDetails =
@@ -160,7 +157,7 @@ class NotificationService {
 
       Get.to(() => NotificationScreen(),
           transition: Transition.fadeIn, duration: Duration(milliseconds: 500));
-    } else if (message.data['screen'] == 'notifictaion') {
+    } else if (message.data['screen'] == 'notification') {
       Get.to(() => NotificationScreen(),
           transition: Transition.fadeIn, duration: Duration(milliseconds: 500));
     } else {

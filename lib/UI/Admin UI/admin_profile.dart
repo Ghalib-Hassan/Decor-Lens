@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:decor_lens/UI/Auth%20Screens/user_login.dart';
 import 'package:decor_lens/Utils/colors.dart';
@@ -8,7 +7,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:animate_do/animate_do.dart';
 
 class AdminProfileScreen extends StatefulWidget {
@@ -22,7 +20,7 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
   final nameController = TextEditingController();
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
-  File? imageFile;
+  final supportNumberController = TextEditingController();
   bool isLoading = false;
 
   @override
@@ -43,6 +41,7 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
         nameController.text = data?['name'] ?? '';
         emailController.text = data?['email'] ?? '';
         passwordController.text = data?['password'] ?? '';
+        supportNumberController.text = data?['supportNumber'] ?? '';
       } else {
         customSnackbar(
           title: "Error",
@@ -63,15 +62,6 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
     }
   }
 
-  Future<void> pickImage() async {
-    final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
-    if (picked != null) {
-      setState(() {
-        imageFile = File(picked.path);
-      });
-    }
-  }
-
   void saveProfile() async {
     setState(() {
       isLoading = true;
@@ -84,6 +74,7 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
         'name': nameController.text.trim(),
         'email': emailController.text.trim(),
         'password': passwordController.text.trim(),
+        'supportNumber': supportNumberController.text.trim(),
       });
 
       setState(() {
@@ -120,64 +111,68 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
 
-    return Scaffold(
-      backgroundColor: adminBack,
-      appBar: AppBar(
-        backgroundColor: adminAppbar,
-        title: Text(
-          'Admin Profile',
-          style: GoogleFonts.poppins(
-            fontSize: screenHeight * 0.025,
-            color: white,
-            fontWeight: FontWeight.w600,
+    return Theme(
+      data: ThemeData.light(),
+      child: Scaffold(
+        backgroundColor: adminBack,
+        appBar: AppBar(
+          backgroundColor: adminAppbar,
+          title: Text(
+            'Admin Profile',
+            style: GoogleFonts.poppins(
+              fontSize: screenHeight * 0.025,
+              color: white,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          centerTitle: true,
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back_ios, color: white),
+            onPressed: () => Navigator.pop(context),
           ),
         ),
-        centerTitle: true,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios, color: white),
-          onPressed: () => Navigator.pop(context),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: ZoomIn(
+            duration: const Duration(milliseconds: 500),
+            child: Column(
+              children: [
+                Stack(
+                  alignment: Alignment.bottomRight,
+                  children: [
+                    CircleAvatar(
+                      radius: 60,
+                      backgroundImage:
+                          AssetImage("assets/images/admin_avatar.jpg"),
+                      backgroundColor: grey.withOpacity(.3),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 70),
+                buildTextField("Full Name", nameController),
+                const SizedBox(height: 12),
+                buildTextField("Email", emailController),
+                const SizedBox(height: 12),
+                buildTextField("Password", passwordController,
+                    isPassword: true),
+                const SizedBox(height: 12),
+                buildTextField("Support Number", supportNumberController),
+                const SizedBox(height: 70),
+              ],
+            ),
+          ),
         ),
+        floatingActionButton: CustomButton(
+            buttonWidth: screenWidth * 0.91,
+            buttonHeight: screenHeight * 0.065,
+            fonts: GoogleFonts.poppins(
+              fontSize: screenHeight * 0.022,
+              color: white,
+            ),
+            isLoading: isLoading,
+            buttonText: "Save Changes",
+            onPressed: saveProfile),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: ZoomIn(
-          duration: const Duration(milliseconds: 500),
-          child: Column(
-            children: [
-              Stack(
-                alignment: Alignment.bottomRight,
-                children: [
-                  CircleAvatar(
-                    radius: 60,
-                    backgroundImage: imageFile != null
-                        ? FileImage(imageFile!)
-                        : const AssetImage("assets/images/admin_avatar.jpg")
-                            as ImageProvider,
-                    backgroundColor: grey.withOpacity(.3),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 70),
-              buildTextField("Full Name", nameController),
-              const SizedBox(height: 12),
-              buildTextField("Email", emailController),
-              const SizedBox(height: 12),
-              buildTextField("Password", passwordController, isPassword: true),
-              const SizedBox(height: 70),
-            ],
-          ),
-        ),
-      ),
-      floatingActionButton: CustomButton(
-          buttonWidth: screenWidth * 0.91,
-          buttonHeight: screenHeight * 0.065,
-          fonts: GoogleFonts.poppins(
-            fontSize: screenHeight * 0.022,
-            color: white,
-          ),
-          isLoading: isLoading,
-          buttonText: "Save Changes",
-          onPressed: saveProfile),
     );
   }
 
@@ -186,6 +181,8 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
     return TextField(
       controller: controller,
       obscureText: isPassword,
+      keyboardType:
+          label == "Support Number" ? TextInputType.phone : TextInputType.text,
       decoration: InputDecoration(
         labelText: label,
         labelStyle: GoogleFonts.poppins(),
@@ -194,7 +191,9 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
               ? Icons.email
               : label == "Password"
                   ? Icons.lock
-                  : Icons.person,
+                  : label == "Support Number"
+                      ? Icons.phone
+                      : Icons.person,
           color: deepPurple,
         ),
         filled: true,

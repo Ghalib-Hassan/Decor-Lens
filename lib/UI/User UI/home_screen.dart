@@ -1,7 +1,10 @@
 import 'package:decor_lens/Services/get_server_key.dart';
 import 'package:decor_lens/Services/notification_services.dart';
+import 'package:decor_lens/UI/Auth%20Screens/user_login.dart';
+import 'package:decor_lens/UI/User%20UI/notification_screen.dart';
 import 'package:decor_lens/Utils/exit_confirmation.dart';
 import 'package:decor_lens/Utils/home_screen_search.dart';
+import 'package:decor_lens/Widgets/snackbar_messages.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -12,7 +15,6 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:decor_lens/Provider/dark_mode_provider.dart';
 import 'package:decor_lens/Provider/home_screen_provider.dart';
-import 'package:decor_lens/UI/User%20UI/account_screen.dart';
 import 'package:decor_lens/UI/User%20UI/product_screen.dart';
 import 'package:decor_lens/Utils/colors.dart';
 import 'package:decor_lens/Utils/home_screen_utils.dart';
@@ -38,12 +40,56 @@ class _HomeScreenState extends State<HomeScreen> {
     notificationService.getDeviceToken();
     notificationService.firebaseInit(context);
     notificationService.setupInteractMessage(context);
+    checkUserBlockedStatus();
+
+    serverKey();
     final userId = FirebaseAuth.instance.currentUser?.uid;
     if (userId != null) {
       Provider.of<HomeProvider>(context, listen: false).loadFavorites(userId);
       Provider.of<HomeProvider>(context, listen: false).isFavorite(userId);
     }
     productProvider.fetchProducts("Popular");
+  }
+
+  serverKey() async {
+    GetServerKey getServerKey = GetServerKey();
+    await getServerKey.getServerKeyToken();
+  }
+
+  Future<void> checkUserBlockedStatus() async {
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    print('uid $userId');
+
+    if (userId == null) return;
+
+    try {
+      QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+          .collection('Users')
+          .where('User_id', isEqualTo: userId)
+          .get();
+
+      if (querySnapshot.docs.isNotEmpty) {
+        var userDoc = querySnapshot.docs.first;
+        bool isBlocked = userDoc['is_blocked'] ?? false;
+
+        if (isBlocked) {
+          SnackbarMessages.accountBlocked();
+          FirebaseAuth.instance.signOut();
+
+          final darkModeService =
+              Provider.of<DarkModeService>(context, listen: false);
+          await darkModeService.clearDarkModePreference();
+
+          Get.offAll(
+            () => UserLogin(),
+            transition: Transition.circularReveal,
+            duration: const Duration(seconds: 2),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('Error checking blocked status: $e');
+    }
   }
 
   @override
@@ -122,11 +168,12 @@ class _HomeScreenState extends State<HomeScreen> {
                             size: 26,
                             color: isDarkMode ? white : Colors.black87),
                         onPressed: () async {
-                          GetServerKey getServerKey = GetServerKey();
-                          String accesstoken = await getServerKey
-                              .getServerKeyToken(); // Navigator.push(context,
-                          print(accesstoken);
-                          //     MaterialPageRoute(builder: (_) => MyAccount()));
+                          // GetServerKey getServerKey = GetServerKey();
+                          // String accesstoken = await getServerKey
+                          //     .getServerKeyToken();
+                          // print(accesstoken);
+                          Get.to(() => NotificationScreen(),
+                              transition: Transition.cupertinoDialog);
                         },
                       ),
                     ),

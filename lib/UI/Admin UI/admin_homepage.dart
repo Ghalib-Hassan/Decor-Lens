@@ -4,7 +4,9 @@ import 'package:decor_lens/UI/Admin%20UI/admin_profile.dart';
 import 'package:decor_lens/UI/Admin%20UI/business_card.dart';
 import 'package:decor_lens/UI/Admin%20UI/city_deliveries.dart';
 import 'package:decor_lens/UI/Admin%20UI/notification.dart';
+import 'package:decor_lens/UI/Admin%20UI/statistics.dart';
 import 'package:decor_lens/UI/Admin%20UI/view_items.dart';
+import 'package:decor_lens/UI/Admin%20UI/view_orders.dart';
 import 'package:decor_lens/UI/Admin%20UI/view_users.dart';
 import 'package:decor_lens/UI/Auth%20Screens/user_login.dart';
 import 'package:decor_lens/Utils/colors.dart';
@@ -14,129 +16,114 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-class AdminHomePage extends StatefulWidget {
+class AdminHomePage extends StatelessWidget {
   const AdminHomePage({super.key});
 
   @override
-  State<AdminHomePage> createState() => _AdminHomePageState();
-}
-
-class _AdminHomePageState extends State<AdminHomePage> {
-  @override
   Widget build(BuildContext context) {
-    final List<adminOption> options = [
-      adminOption("Add New Item", Icons.add_box_outlined, Colors.blue),
-      adminOption("Add Customizable", Icons.tune_outlined, Colors.purple),
-      adminOption("View Items", Icons.view_list_rounded, Colors.indigo),
-      adminOption("View Users", Icons.people_alt_outlined, Colors.teal),
-      adminOption("View Orders", Icons.shopping_bag_outlined, Colors.orange),
-      adminOption("Statistics", Icons.bar_chart_rounded, Colors.green),
-      adminOption(
-          "Add Business Card", Icons.credit_card_outlined, Colors.brown),
-      adminOption(
-          "City Deliveries", Icons.location_city_rounded, Colors.deepOrange),
-      adminOption(
-          "Notifications", Icons.notifications_active_outlined, Colors.amber),
-      adminOption("Admin Profile", Icons.person_outline, Colors.deepPurple),
-      adminOption("Logout", Icons.logout, Colors.redAccent, isLogout: true),
+    final List<AdminOption> options = [
+      AdminOption(
+          "Add New Item", Icons.add_box_outlined, blue, AddItemScreen()),
+      AdminOption("Add Customizable", Icons.tune_outlined, Colors.purple,
+          AddCustomizableItem()),
+      AdminOption("View Items", Icons.view_list_rounded, Colors.indigo,
+          AdminViewItems()),
+      AdminOption(
+          "View Users", Icons.people_alt_outlined, teal, AdminViewUsers()),
+      AdminOption("View Orders", Icons.shopping_bag_outlined, Colors.orange,
+          AdminOrdersScreen()),
+      AdminOption("Statistics", Icons.bar_chart_rounded, green, Statistics()),
+      AdminOption("Add Business Card", Icons.credit_card_outlined, Colors.brown,
+          AddBusinessCard()),
+      AdminOption("City Deliveries", Icons.location_city_rounded,
+          Colors.deepOrange, CityDeliveries()),
+      AdminOption("Notifications", Icons.notifications_active_outlined, amber,
+          AdminNotificationScreen()),
+      AdminOption("Admin Profile", Icons.person_outline, deepPurple,
+          AdminProfileScreen()),
+      AdminOption("Logout", Icons.logout, Colors.redAccent, null,
+          isLogout: true),
     ];
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF9F9F9),
+      backgroundColor: const Color(0xFFF4F7FE),
       appBar: AppBar(
-        scrolledUnderElevation: 0.0,
         elevation: 0,
-        backgroundColor: Color(0xFFF9F9F9),
+        backgroundColor: Colors.transparent,
         title: Text(
           'Admin Dashboard',
-          style: GoogleFonts.merriweather(
+          style: GoogleFonts.montserrat(
+            fontSize: 24,
+            fontWeight: FontWeight.w700,
             color: Colors.black87,
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
           ),
         ),
         centerTitle: true,
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: ListView.builder(
-              scrollDirection: Axis.vertical,
-              padding: const EdgeInsets.all(20),
-              itemCount: options.length,
-              itemBuilder: (context, index) {
-                final option = options[index];
-                return adminOptionCard(option: option);
-              },
-            ),
-          ),
-        ],
+      body: GridView.builder(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          crossAxisSpacing: 16,
+          mainAxisSpacing: 16,
+          childAspectRatio: 1.1,
+        ),
+        itemCount: options.length,
+        itemBuilder: (context, index) => AdminCard(option: options[index]),
       ),
     );
   }
 }
 
-class adminOption {
+class AdminOption {
   final String title;
   final IconData icon;
   final Color color;
+  final Widget? screen;
   final bool isLogout;
 
-  adminOption(this.title, this.icon, this.color, {this.isLogout = false});
+  AdminOption(this.title, this.icon, this.color, this.screen,
+      {this.isLogout = false});
 }
 
-class adminOptionCard extends StatelessWidget {
-  final adminOption option;
+class AdminCard extends StatelessWidget {
+  final AdminOption option;
 
-  const adminOptionCard({required this.option});
+  const AdminCard({super.key, required this.option});
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return InkWell(
       onTap: () async {
-        // Add onTap navigation logic here
-        if (option.isLogout || option.title == "Logout") {
+        if (option.isLogout) {
           final auth = FirebaseAuth.instance;
           final user = auth.currentUser;
 
           if (user != null && user.email != null) {
             String? password;
-
-            // 🔐 Ask for password before deleting
             await Get.defaultDialog(
               title: "Confirm Logout",
-              titleStyle: TextStyle(color: black),
               content: Column(
                 children: [
-                  Text(
-                    "Please enter your password to confirm logout & delete.",
-                    style: TextStyle(color: black),
-                  ),
+                  const Text("Enter your password to logout & delete."),
                   const SizedBox(height: 10),
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: TextField(
-                      style: TextStyle(color: black),
-                      obscureText: true,
-                      onChanged: (value) => password = value,
-                      decoration: InputDecoration(
-                        labelText: "Password",
-                        labelStyle: TextStyle(color: black),
-                        border: OutlineInputBorder(),
-                      ),
+                  TextField(
+                    textCapitalization: TextCapitalization.sentences,
+                    obscureText: true,
+                    onChanged: (value) => password = value,
+                    decoration: const InputDecoration(
+                      labelText: "Password",
+                      border: OutlineInputBorder(),
                     ),
                   ),
                 ],
               ),
-              backgroundColor: white,
               textCancel: "Cancel",
               textConfirm: "Confirm",
               confirmTextColor: white,
               buttonColor: appColor,
-              cancelTextColor: red,
               onConfirm: () async {
-                Get.back(); // close dialog
-
+                Get.back();
                 if (password == null || password!.isEmpty) {
                   customSnackbar(
                     title: "Password Required",
@@ -148,19 +135,13 @@ class adminOptionCard extends StatelessWidget {
                   );
                   return;
                 }
-
                 try {
-                  // ✅ Re-authenticate
                   final credential = EmailAuthProvider.credential(
                     email: user.email!,
                     password: password!,
                   );
-
                   await user.reauthenticateWithCredential(credential);
-
-                  // ✅ Now delete the account
                   await user.delete();
-
                   customSnackbar(
                     title: "Success",
                     message: "Logged out successfully.",
@@ -168,11 +149,8 @@ class adminOptionCard extends StatelessWidget {
                     iconColor: green,
                     icon: Icons.check_circle_outline,
                   );
-
-                  Get.offAll(() => UserLogin(), transition: Transition.zoom);
-                } catch (e) {
-                  print("Account deletion failed: $e");
-
+                  Get.offAll(() => const UserLogin());
+                } catch (_) {
                   customSnackbar(
                     title: "Failed",
                     message: "Incorrect password or network error.",
@@ -184,54 +162,42 @@ class adminOptionCard extends StatelessWidget {
               },
             );
           }
-        } else if (option.title == "Add New Item") {
-          Get.to(AddItemScreen(), transition: Transition.rightToLeft);
-        } else if (option.title == "Add Customizable") {
-          Get.to(AddCustomizableItem(), transition: Transition.rightToLeft);
-        } else if (option.title == "View Items") {
-          Get.to(AdminViewItems(), transition: Transition.rightToLeft);
-        } else if (option.title == "View Users") {
-          Get.to(AdminViewUsers(), transition: Transition.rightToLeft);
-        } else if (option.title == "Add Business Card") {
-          Get.to(AddBusinessCard(), transition: Transition.rightToLeft);
-        } else if (option.title == "City Deliveries") {
-          Get.to(CityDeliveries(), transition: Transition.rightToLeft);
-        } else if (option.title == "Admin Profile") {
-          Get.to(AdminProfileScreen(), transition: Transition.rightToLeft);
-        } else if (option.title == "Notifications") {
-          Get.to(AdminNotificationScreen(), transition: Transition.rightToLeft);
+        } else {
+          Get.to(() => option.screen!, transition: Transition.rightToLeft);
         }
       },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 500),
-        curve: Curves.easeInOut,
-        padding: const EdgeInsets.all(18),
-        margin: const EdgeInsets.symmetric(vertical: 10),
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
         decoration: BoxDecoration(
-          color: option.color.withOpacity(0.08),
-          borderRadius: BorderRadius.circular(24),
+          color: option.color.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
               color: option.color.withOpacity(0.2),
-              blurRadius: 10,
+              blurRadius: 12,
               offset: const Offset(0, 6),
             ),
           ],
         ),
-        child: Row(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(option.icon, size: 30, color: option.color),
-            const SizedBox(width: 20),
+            CircleAvatar(
+              radius: 30,
+              backgroundColor: option.color.withOpacity(0.15),
+              child: Icon(option.icon, color: option.color, size: 30),
+            ),
+            const SizedBox(height: 16),
             Text(
               option.title,
-              style: GoogleFonts.nunitoSans(
-                fontSize: 18,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.poppins(
+                fontSize: 15,
                 fontWeight: FontWeight.w600,
-                color: option.color,
+                color: Colors.black87,
               ),
-            ),
-            const Spacer(),
-            Icon(Icons.arrow_forward_ios, size: 18, color: option.color),
+            )
           ],
         ),
       ),

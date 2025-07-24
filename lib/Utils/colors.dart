@@ -23,6 +23,9 @@ const kChristmasSilver = Color(0xFFE0E0E0);
 Color orangeAccent = Colors.orangeAccent;
 const kTinGrey = Color(0xFF909090);
 const kNoghreiSilver = Color(0xFFBDBDBD);
+const myOrdersBack = Color(0x408A959E);
+Color darkGrey = const Color(0xff606060);
+
 // Color appColor = Color(0xFF626F47);
 // Color grey = Color(0xFFA4B465);
 // Color teal = Color(0xFFFFCF50);

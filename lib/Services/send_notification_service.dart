@@ -10,33 +10,45 @@ class SendNotificationService {
     required String? body,
     required Map<String, dynamic>? data,
   }) async {
-    String serverKey = await GetServerKey().getServerKeyToken();
-    String url =
-        'https://fcm.googleapis.com/v1/projects/decor-lens/messages:send';
+    try {
+      String serverKey = await GetServerKey().getServerKeyToken();
+      String url =
+          'https://fcm.googleapis.com/v1/projects/decor-lens/messages:send';
 
-    var headers = <String, String>{
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer $serverKey',
-    };
-    Map<String, dynamic> message = {
-      "message": {
-        "token": token,
-        'topic': topic,
-        "notification": {"body": body, "title": title},
-        "data": data
+      var headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $serverKey',
+      };
+
+      Map<String, dynamic> message = {
+        "message": {
+          if (token != null) "token": token,
+          if (token == null && topic != null) "topic": topic,
+          "notification": {
+            "title": title,
+            "body": body,
+          },
+          "android": {
+            "notification": {"channel_id": "default_channel"}
+          },
+          "data": data ?? {},
+        }
+      };
+
+      final response = await http.post(
+        Uri.parse(url),
+        headers: headers,
+        body: jsonEncode(message),
+      );
+
+      if (response.statusCode == 200) {
+        print('✅ Notification sent successfully!');
+      } else {
+        print('❌ Failed to send notification: ${response.statusCode}');
+        print('Response body: ${response.body}');
       }
-    };
-
-    final http.Response response = await http.post(
-      Uri.parse(url),
-      headers: headers,
-      body: jsonEncode(message),
-    );
-
-    if (response.statusCode == 200) {
-      print('Notification sent successfully!');
-    } else {
-      print('Failed to send notification: ${response.statusCode}');
+    } catch (e) {
+      print('❌ Exception during notification sending: $e');
     }
   }
 }

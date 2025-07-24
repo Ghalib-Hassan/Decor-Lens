@@ -2,8 +2,11 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:decor_lens/Provider/dark_mode_provider.dart';
+import 'package:decor_lens/UI/Auth%20Screens/user_login.dart';
 import 'package:decor_lens/UI/User%20UI/address_screen.dart';
+import 'package:decor_lens/UI/User%20UI/business_card.dart';
 import 'package:decor_lens/UI/User%20UI/faq.dart';
+import 'package:decor_lens/UI/User%20UI/my_reviews.dart';
 import 'package:decor_lens/UI/User%20UI/notification_screen.dart';
 import 'package:decor_lens/UI/User%20UI/orders_screen.dart';
 import 'package:decor_lens/UI/User%20UI/privacy_policy.dart';
@@ -35,6 +38,49 @@ class _MyAccountState extends State<MyAccount> {
   final TextEditingController nameController = TextEditingController();
   String? updatedProfileUrl;
   bool isUploading = false;
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    checkUserBlockedStatus();
+  }
+
+  Future<void> checkUserBlockedStatus() async {
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    print('uid $userId');
+
+    if (userId == null) return;
+
+    try {
+      QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+          .collection('Users')
+          .where('User_id', isEqualTo: userId)
+          .get();
+
+      if (querySnapshot.docs.isNotEmpty) {
+        var userDoc = querySnapshot.docs.first;
+        bool isBlocked = userDoc['is_blocked'] ?? false;
+
+        if (isBlocked) {
+          SnackbarMessages.accountBlocked();
+          FirebaseAuth.instance.signOut();
+
+          final darkModeService =
+              Provider.of<DarkModeService>(context, listen: false);
+          await darkModeService.clearDarkModePreference();
+
+          Get.offAll(
+            () => UserLogin(),
+            transition: Transition.circularReveal,
+            duration: const Duration(seconds: 2),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('Error checking blocked status: $e');
+    }
+  }
 
   void _showEditDialog(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser!;
@@ -409,16 +455,33 @@ class _MyAccountState extends State<MyAccount> {
                       icon: Icons.chat_outlined,
                       title: 'Chat with Support',
                       onTap: () async {
-                        const supportNumber =
-                            '923185631699'; // Replace with actual WhatsApp number
-                        final message = Uri.encodeComponent(
-                            'Hi, I need help with my account.');
-                        final url =
-                            'https://wa.me/$supportNumber?text=$message';
-                        if (await canLaunchUrl(Uri.parse(url))) {
-                          await launchUrl(Uri.parse(url),
-                              mode: LaunchMode.externalApplication);
-                        } else {
+                        try {
+                          final doc = await FirebaseFirestore.instance
+                              .collection('Admin Credentials')
+                              .doc('admin_id')
+                              .get();
+
+                          if (doc.exists &&
+                              doc.data() != null &&
+                              doc.data()!.containsKey('supportNumber')) {
+                            final supportNumber =
+                                doc['supportNumber'].toString().trim();
+                            final message = Uri.encodeComponent(
+                                'Hi, I need help with my account.');
+                            final url =
+                                'https://wa.me/$supportNumber?text=$message';
+
+                            if (await canLaunchUrl(Uri.parse(url))) {
+                              await launchUrl(Uri.parse(url),
+                                  mode: LaunchMode.externalApplication);
+                            } else {
+                              SnackbarMessages.whatsappError();
+                            }
+                          } else {
+                            SnackbarMessages.whatsappError();
+                          }
+                        } catch (e) {
+                          debugPrint('❌ Failed to fetch support number: $e');
                           SnackbarMessages.whatsappError();
                         }
                       },
@@ -479,9 +542,14 @@ class _MyAccountState extends State<MyAccount> {
   List<Widget> _buildAnimatedAccountOptions() {
     List<Map<String, dynamic>> options = [
       {
-        'icon': Icons.delivery_dining,
+        'icon': Icons.delivery_dining_outlined,
         'title': 'Orders',
-        'screen': OrdersScreen()
+        'screen': MyOrders()
+      },
+      {
+        'icon': Icons.reviews_outlined,
+        'title': 'My Reviews',
+        'screen': MyReviews()
       },
       {
         'icon': Icons.bookmark_outline,
@@ -489,14 +557,14 @@ class _MyAccountState extends State<MyAccount> {
         'screen': AddressScreen()
       },
       {
-        'icon': Icons.payment_outlined,
-        'title': 'Payment Methods',
-        'screen': OrdersScreen()
-      },
-      {
         'icon': Icons.notifications_outlined,
         'title': 'Notifications',
         'screen': NotificationScreen()
+      },
+      {
+        'icon': Icons.business,
+        'title': 'Business Card',
+        'screen': UserBusinessCard()
       },
       {
         'icon': Icons.lock_outline,

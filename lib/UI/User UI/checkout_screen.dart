@@ -1,5 +1,6 @@
 import 'package:decor_lens/Provider/dark_mode_provider.dart';
 import 'package:decor_lens/Services/payment_services.dart';
+import 'package:decor_lens/UI/Auth%20Screens/user_login.dart';
 import 'package:decor_lens/UI/User%20UI/address_screen.dart';
 import 'package:decor_lens/UI/User%20UI/success_screen.dart';
 import 'package:decor_lens/Utils/colors.dart';
@@ -40,6 +41,43 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   void initState() {
     super.initState();
     loadShippingAndDelivery();
+    checkUserBlockedStatus();
+  }
+
+  Future<void> checkUserBlockedStatus() async {
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    print('uid $userId');
+
+    if (userId == null) return;
+
+    try {
+      QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+          .collection('Users')
+          .where('User_id', isEqualTo: userId)
+          .get();
+
+      if (querySnapshot.docs.isNotEmpty) {
+        var userDoc = querySnapshot.docs.first;
+        bool isBlocked = userDoc['is_blocked'] ?? false;
+
+        if (isBlocked) {
+          SnackbarMessages.accountBlocked();
+          FirebaseAuth.instance.signOut();
+
+          final darkModeService =
+              Provider.of<DarkModeService>(context, listen: false);
+          await darkModeService.clearDarkModePreference();
+
+          Get.offAll(
+            () => UserLogin(),
+            transition: Transition.circularReveal,
+            duration: const Duration(seconds: 2),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('Error checking blocked status: $e');
+    }
   }
 
   Future<void> loadShippingAndDelivery() async {

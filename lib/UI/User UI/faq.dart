@@ -9,16 +9,26 @@ import 'package:provider/provider.dart';
 class FAQScreen extends StatelessWidget {
   final List<Map<String, String>> faqData = [
     {
-      'question': 'How to change password?',
-      'answer': 'Go to Security > Change Password.'
-    },
-    {
       'question': 'How to track my order?',
       'answer': 'Go to Orders > Track Order for real-time updates.'
     },
     {
       'question': 'How to return an item?',
       'answer': 'Contact support within 7 days of delivery.'
+    },
+    {
+      'question': 'How to leave a comment or review on a product?',
+      'answer': 'Go to the product page and tap on review.'
+    },
+    {
+      'question': 'How to toggle dark mode?',
+      'answer':
+          'Go to Profile > Security > Dark Mode switch to toggle between light and dark themes.'
+    },
+    {
+      'question': 'How to customize a product?',
+      'answer':
+          'Tap on the Customize button on the product screen and enter your dimensions before adding to cart.'
     },
   ];
 

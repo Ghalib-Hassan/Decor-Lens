@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:decor_lens/Provider/dark_mode_provider.dart';
+import 'package:decor_lens/UI/Auth%20Screens/user_login.dart';
 import 'package:decor_lens/UI/User%20UI/checkout_screen.dart';
 import 'package:decor_lens/UI/User%20UI/product_screen.dart';
 import 'package:decor_lens/Utils/colors.dart';
@@ -44,6 +45,7 @@ class _CartState extends State<Cart> with SingleTickerProviderStateMixin {
     super.initState();
     fetchCustomItemsAndSetInitialValues();
     fetchAllItemsAndCalculateTotal();
+    checkUserBlockedStatus();
 
     // Initialize tracking for each item
     FirebaseFirestore.instance.collection('Cart Items').get().then((snapshot) {
@@ -55,6 +57,42 @@ class _CartState extends State<Cart> with SingleTickerProviderStateMixin {
     // Initialize TabController with the received index
     _tabController = TabController(
         length: 2, vsync: this, initialIndex: widget.initialTabIndex);
+  }
+
+  Future<void> checkUserBlockedStatus() async {
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    print('uid $userId');
+
+    if (userId == null) return;
+
+    try {
+      QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+          .collection('Users')
+          .where('User_id', isEqualTo: userId)
+          .get();
+
+      if (querySnapshot.docs.isNotEmpty) {
+        var userDoc = querySnapshot.docs.first;
+        bool isBlocked = userDoc['is_blocked'] ?? false;
+
+        if (isBlocked) {
+          SnackbarMessages.accountBlocked();
+          FirebaseAuth.instance.signOut();
+
+          final darkModeService =
+              Provider.of<DarkModeService>(context, listen: false);
+          await darkModeService.clearDarkModePreference();
+
+          Get.offAll(
+            () => UserLogin(),
+            transition: Transition.circularReveal,
+            duration: const Duration(seconds: 2),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('Error checking blocked status: $e');
+    }
   }
 
   Future<void> fetchCustomItemsAndSetInitialValues() async {
