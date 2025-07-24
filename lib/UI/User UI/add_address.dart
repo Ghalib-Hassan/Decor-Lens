@@ -113,21 +113,32 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
 
       if (userDoc.exists) {
         final data = userDoc.data() as Map<String, dynamic>;
+
         final phone = data['Phone_number'];
         final name = data['Name'];
 
-        if (phone != null && phone.toString().isNotEmpty ||
-            name != null && name.toString().isNotEmpty) {
+        // Handle phone number
+        if (phone != null && phone.toString().isNotEmpty) {
           String formattedPhone = phone.toString();
           if (formattedPhone.startsWith('+92')) {
             formattedPhone = formattedPhone.replaceFirst('+92', '');
           }
           phoneController.text = formattedPhone;
-          nameController.text = name.toString();
+        } else {
+          phoneController.text =
+              ''; // 👈 Initially blank — we handle prefix in the field widget
         }
+
+        // Handle name
+        nameController.text = name?.toString() ?? '';
+      } else {
+        phoneController.text = '';
+        nameController.text = '';
       }
     } catch (e) {
       print("Error fetching phone number: $e");
+      phoneController.text = '';
+      nameController.text = '';
     }
   }
 
@@ -398,6 +409,11 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
                         ),
                         keyboardType: TextInputType.phone,
                         decoration: InputDecoration(
+                          prefixText: "+92 ",
+                          prefixStyle:
+                              GoogleFonts.poppins(color: grey.withOpacity(.6)),
+                          prefixIcon:
+                              Icon(Icons.phone, color: grey.withOpacity(.6)),
                           counterText: '',
                           labelText: "Phone Number",
                           labelStyle: TextStyle(
