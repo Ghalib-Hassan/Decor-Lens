@@ -177,6 +177,14 @@ class _ProductScreenState extends State<ProductScreen> {
                         child: buildThumbnail(img, screenWidth),
                       );
                     }),
+                    // ✅ Image thumbnail even if only one image
+                    if (provider.mainImage.isNotEmpty)
+                      GestureDetector(
+                        onTap: () => provider.switchImage(provider.mainImage),
+                        child: buildThumbnail(provider.mainImage, screenWidth),
+                      ),
+
+                    // ✅ 3D model thumbnail
                     if (widget.model != null && widget.model!.isNotEmpty)
                       GestureDetector(
                         onTap: provider.switchTo3DModel,
@@ -189,15 +197,13 @@ class _ProductScreenState extends State<ProductScreen> {
                             decoration: BoxDecoration(
                               boxShadow: [
                                 BoxShadow(
-                                  color: black
-                                      .withOpacity(0.08), // subtle outer shadow
+                                  color: black.withOpacity(0.08),
                                   blurRadius: 15,
                                   spreadRadius: 2,
                                   offset: const Offset(0, 6),
                                 ),
                                 BoxShadow(
-                                  color:
-                                      white.withOpacity(0.6), // inner-like glow
+                                  color: white.withOpacity(0.6),
                                   blurRadius: 8,
                                   spreadRadius: -6,
                                   offset: const Offset(-4, -4),

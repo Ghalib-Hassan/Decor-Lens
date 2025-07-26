@@ -1,3 +1,4 @@
+import 'package:decor_lens/Services/get_server_key.dart';
 import 'package:decor_lens/Services/notification_services.dart';
 import 'package:decor_lens/Services/send_notification_service.dart';
 import 'package:decor_lens/Utils/colors.dart';
@@ -27,7 +28,13 @@ class _AdminNotificationScreenState extends State<AdminNotificationScreen> {
         .snapshots();
 
     NotificationService notificationService = NotificationService();
+    getServerKey();
     notificationService.getDeviceToken();
+  }
+
+  getServerKey() async {
+    GetServerKey getServerKey = GetServerKey();
+    await getServerKey.getServerKeyToken();
   }
 
   void showNotificationSheet() {
@@ -174,6 +181,7 @@ class _AdminNotificationScreenState extends State<AdminNotificationScreen> {
       margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       child: ListTile(
+        onTap: () => _editNotification(doc),
         leading: Icon(
             isLatest ? Icons.fiber_new : Icons.notifications_none_outlined,
             color: isLatest ? Colors.green : Colors.grey),
@@ -203,6 +211,126 @@ class _AdminNotificationScreenState extends State<AdminNotificationScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  void _editNotification(DocumentSnapshot doc) {
+    final titleController = TextEditingController(text: doc['title']);
+    final bodyController = TextEditingController(text: doc['body']);
+    String currentLatest = doc['latest'];
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (_) {
+        return Padding(
+          padding: MediaQuery.of(context).viewInsets,
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text("🛠 Edit Notification",
+                    style: GoogleFonts.poppins(
+                        fontSize: 20, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 20),
+                TextField(
+                  controller: titleController,
+                  decoration: InputDecoration(labelText: 'Title'),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: bodyController,
+                  maxLines: 3,
+                  decoration: InputDecoration(labelText: 'Body'),
+                ),
+                const SizedBox(height: 10),
+                StatefulBuilder(
+                  builder: (context, setModalState) {
+                    return Row(
+                      children: [
+                        Checkbox(
+                          value: currentLatest == "1",
+                          onChanged: (value) {
+                            setModalState(() {
+                              currentLatest = value! ? "1" : "0";
+                            });
+                          },
+                        ),
+                        const Text("Mark as Latest"),
+                      ],
+                    );
+                  },
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    ElevatedButton.icon(
+                      onPressed: () async {
+                        await FirebaseFirestore.instance
+                            .collection('Notifications')
+                            .doc(doc.id)
+                            .update({
+                          'title': titleController.text.trim(),
+                          'body': bodyController.text.trim(),
+                          'latest': currentLatest,
+                        });
+                        Navigator.pop(context);
+                        Get.snackbar("✅ Updated", "Notification updated only.");
+                      },
+                      icon: Icon(Icons.save, color: white),
+                      label: Text("Update", style: TextStyle(color: white)),
+                      style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue),
+                    ),
+                    ElevatedButton.icon(
+                      onPressed: () async {
+                        // First update Firestore
+                        await FirebaseFirestore.instance
+                            .collection('Notifications')
+                            .doc(doc.id)
+                            .update({
+                          'title': titleController.text.trim(),
+                          'body': bodyController.text.trim(),
+                          'latest': currentLatest,
+                        });
+
+                        // Then send broadcast
+                        await SendNotificationService.sendNotificationUsingApi(
+                          title: titleController.text.trim(),
+                          body: bodyController.text.trim(),
+                          topic: "all_users",
+                          data: {"screen": "notification"},
+                        );
+
+                        Navigator.pop(context);
+                        Get.snackbar(
+                            "📣 Broadcasted", "Notification updated and sent.");
+                      },
+                      icon: Icon(
+                        Icons.campaign,
+                        color: white,
+                      ),
+                      label: Text("Broadcast", style: TextStyle(color: white)),
+                      style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.deepPurple),
+                    ),
+                    OutlinedButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text("Cancel"),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 

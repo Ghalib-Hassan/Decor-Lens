@@ -2,6 +2,7 @@ import 'package:animate_do/animate_do.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:decor_lens/UI/Admin%20UI/admin_review.dart';
 import 'package:decor_lens/UI/Admin%20UI/edit_customizable.dart';
+import 'package:decor_lens/UI/Admin%20UI/edit_item.dart';
 import 'package:decor_lens/UI/Admin%20UI/image_detail.dart';
 import 'package:decor_lens/Utils/colors.dart';
 import 'package:decor_lens/Widgets/snackbar.dart';
@@ -269,9 +270,7 @@ class _CategoryTabState extends State<CategoryTab> {
                           IconButton(
                             icon: Icon(Icons.edit, color: blueAccent),
                             onPressed: () async {
-                              print('going');
                               if (widget.category == 'Custom') {
-                                print('go');
                                 final result = await Get.to(
                                     () => EditCustomizableItem(
                                           item: item,
@@ -281,9 +280,14 @@ class _CategoryTabState extends State<CategoryTab> {
                                   setState(() {});
                                 }
                               } else {
-                                print('go second');
-
-                                // navPush(context, EditItemScreen(item: item));
+                                final result = await Get.to(
+                                    () => EditItems(
+                                          item: item,
+                                        ),
+                                    transition: Transition.fadeIn);
+                                if (result == 'updated') {
+                                  setState(() {});
+                                }
                               }
                             },
                           ),

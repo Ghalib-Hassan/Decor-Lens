@@ -224,6 +224,73 @@ class AdminItemService {
     required String price,
     required List<String> imageUrls,
     required String glbFileUrl,
+    required String height,
+    required String width,
+    required String space,
+  }) async {
+    try {
+      await FirebaseFirestore.instance.collection('Items').doc(itemId).update({
+        'ItemName': name,
+        'ItemDescription': description,
+        'ItemPrice': price,
+        'Images': imageUrls,
+        'Model': glbFileUrl,
+        'Height': height,
+        'Width': width,
+        'Space': space,
+      });
+
+      // ✅ Now update favorite entries
+      final favUsersSnapshot = await FirebaseFirestore.instance
+          .collectionGroup('Items')
+          .where('ItemId', isEqualTo: itemId)
+          .get();
+
+      for (var favDoc in favUsersSnapshot.docs) {
+        await favDoc.reference.update({
+          'ItemName': name,
+          'ItemDescription': description,
+          'ItemPrice': price,
+          'Images': imageUrls,
+          'Model': glbFileUrl,
+          'Height': height,
+          'Width': width,
+          'Space': space,
+          'Timestamp': FieldValue.serverTimestamp(),
+        });
+      }
+
+      customSnackbar(
+        title: 'Success',
+        message: 'Item updated successfully!',
+        messageColor: black,
+        titleColor: green,
+        icon: Icons.check_circle,
+        iconColor: green,
+        backgroundColor: white,
+      );
+    } catch (e) {
+      print(e);
+      customSnackbar(
+        title: 'Error',
+        message: 'Failed to update item: $e',
+        messageColor: black,
+        titleColor: red,
+        icon: Icons.error_outline,
+        iconColor: red,
+        backgroundColor: white,
+      );
+    }
+  }
+
+  static Future<void> updateCustomItem({
+    required BuildContext context,
+    required String itemId,
+    required String name,
+    required String description,
+    required String price,
+    required List<String> imageUrls,
+    required String glbFileUrl,
   }) async {
     try {
       await FirebaseFirestore.instance.collection('Items').doc(itemId).update({
@@ -237,6 +304,25 @@ class AdminItemService {
         'Space': "",
       });
 
+// ✅ Update favorites too
+      final favUsersSnapshot = await FirebaseFirestore.instance
+          .collectionGroup('Items')
+          .where('ItemId', isEqualTo: itemId)
+          .get();
+
+      for (var favDoc in favUsersSnapshot.docs) {
+        await favDoc.reference.update({
+          'ItemName': name,
+          'ItemDescription': description,
+          'ItemPrice': price,
+          'Images': imageUrls,
+          'Model': glbFileUrl,
+          'Height': "",
+          'Width': "",
+          'Space': "",
+          'Timestamp': FieldValue.serverTimestamp(),
+        });
+      }
       customSnackbar(
         title: 'Success',
         message: 'Item updated successfully!',
@@ -247,6 +333,8 @@ class AdminItemService {
         backgroundColor: white,
       );
     } catch (e) {
+      print(e);
+      ;
       customSnackbar(
         title: 'Error',
         message: 'Failed to update item: $e',

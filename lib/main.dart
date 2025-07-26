@@ -98,12 +98,10 @@ Future<void> saveNotificationToFirestore(String title, String body) async {
   FirebaseFirestore firestore = FirebaseFirestore.instance;
   CollectionReference notificationsRef = firestore.collection('Notifications');
 
-  // Step 1: Fetch all previous notifications for this user
-  var allPrevious = await notificationsRef
-      .where('notificationId', isEqualTo: notificationId)
-      .get();
+  // Step 1: Fetch ALL previous notifications (not filtered by user)
+  var allPrevious = await notificationsRef.get();
 
-  // Step 2: Check for exact match (title + body) in ALL previous data
+  // Step 2: Check for exact match (title + body)
   bool isDuplicate = allPrevious.docs.any((doc) =>
       doc['title'].toString().trim() == title.trim() &&
       doc['body'].toString().trim() == body.trim());
@@ -113,12 +111,12 @@ Future<void> saveNotificationToFirestore(String title, String body) async {
     return;
   }
 
-  // Step 3: Update 'latest' flag of previous "latest" notifications
+  // Step 3: Reset 'latest' flag from previous notifications
   for (var doc in allPrevious.docs.where((doc) => doc['latest'] == "1")) {
     await doc.reference.update({'latest': "0"});
   }
 
-  // Step 4: Add new notification with latest = "1"
+  // Step 4: Add new notification
   await notificationsRef.add({
     'notificationId': notificationId,
     'title': title.trim(),
@@ -129,7 +127,7 @@ Future<void> saveNotificationToFirestore(String title, String body) async {
 
   debugPrint("✅ New notification added: $title | $body");
 
-  // Step 5: Update UI if controller is available
+  // Step 5: Optional controller update
   try {
     Get.find<NotificationController>().updateNotifications();
   } catch (e) {

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:decor_lens/Services/admin_services.dart';
 import 'package:decor_lens/Utils/colors.dart';
+import 'package:decor_lens/Widgets/admin_product_dimensions.dart';
 import 'package:decor_lens/Widgets/custom_button.dart';
 import 'package:decor_lens/Widgets/snackbar.dart';
 import 'package:flutter/material.dart';
@@ -13,19 +14,22 @@ import 'package:model_viewer_plus/model_viewer_plus.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
 
-class EditCustomizableItem extends StatefulWidget {
+class EditItems extends StatefulWidget {
   final QueryDocumentSnapshot item;
 
-  const EditCustomizableItem({super.key, required this.item});
+  const EditItems({super.key, required this.item});
 
   @override
-  _EditCustomizableItemState createState() => _EditCustomizableItemState();
+  _EditItemsState createState() => _EditItemsState();
 }
 
-class _EditCustomizableItemState extends State<EditCustomizableItem> {
+class _EditItemsState extends State<EditItems> {
   TextEditingController itemNameController = TextEditingController();
   TextEditingController itemDescriptionController = TextEditingController();
   TextEditingController itemPriceController = TextEditingController();
+  TextEditingController heightController = TextEditingController();
+  TextEditingController widthController = TextEditingController();
+  TextEditingController spaceController = TextEditingController();
 
   File? imageFile;
   XFile? image;
@@ -42,6 +46,9 @@ class _EditCustomizableItemState extends State<EditCustomizableItem> {
     itemNameController.text = widget.item['ItemName'];
     itemDescriptionController.text = widget.item['ItemDescription'];
     itemPriceController.text = widget.item['ItemPrice'];
+    heightController.text = widget.item['Height'];
+    widthController.text = widget.item['Width'];
+    spaceController.text = widget.item['Space'];
     glbFileUrl = widget.item['Model'] ?? ''; // Initialize 3D model URL
 
     List<dynamic> imageUrlsDynamic = widget.item['Images'] ?? [];
@@ -54,10 +61,6 @@ class _EditCustomizableItemState extends State<EditCustomizableItem> {
     XFile? newImage = await picker.pickImage(source: ImageSource.gallery);
 
     if (newImage != null) {
-      setState(() {
-        isLoading = true;
-      });
-
       try {
         // 1. Upload new image to Cloudinary
         var uploadUri = Uri.parse(
@@ -102,9 +105,7 @@ class _EditCustomizableItemState extends State<EditCustomizableItem> {
             icon: Icons.error,
             iconColor: red);
       } finally {
-        setState(() {
-          isLoading = false;
-        });
+        setState(() {});
       }
     }
   }
@@ -162,10 +163,6 @@ class _EditCustomizableItemState extends State<EditCustomizableItem> {
   }
 
   Future<void> deleteImage(int index) async {
-    setState(() {
-      isLoading = true;
-    });
-
     try {
       // 2. Remove from local list
       imageUrls.removeAt(index);
@@ -197,9 +194,7 @@ class _EditCustomizableItemState extends State<EditCustomizableItem> {
         backgroundColor: white,
       );
     } finally {
-      setState(() {
-        isLoading = false;
-      });
+      setState(() {});
     }
   }
 
@@ -230,6 +225,7 @@ class _EditCustomizableItemState extends State<EditCustomizableItem> {
         );
       }
     }
+    setState(() {});
   }
 
   Future<void> delete3DModel() async {
@@ -245,10 +241,6 @@ class _EditCustomizableItemState extends State<EditCustomizableItem> {
       );
       return;
     }
-
-    setState(() {
-      isLoading = true;
-    });
 
     try {
       // Remove the model URL from Firestore
@@ -281,9 +273,7 @@ class _EditCustomizableItemState extends State<EditCustomizableItem> {
         backgroundColor: white,
       );
     } finally {
-      setState(() {
-        isLoading = false;
-      });
+      setState(() {});
     }
   }
 
@@ -304,7 +294,7 @@ class _EditCustomizableItemState extends State<EditCustomizableItem> {
 
     setState(() => isLoading = true);
 
-    await AdminItemService.updateCustomItem(
+    await AdminItemService.updateItem(
       context: context,
       itemId: widget.item.id,
       name: itemNameController.text,
@@ -312,11 +302,12 @@ class _EditCustomizableItemState extends State<EditCustomizableItem> {
       price: itemPriceController.text,
       imageUrls: imageUrls,
       glbFileUrl: glbFileUrl,
+      height: heightController.text,
+      width: widthController.text,
+      space: spaceController.text,
     );
 
-    setState(() {
-      isLoading = false;
-    });
+    setState(() => isLoading = false);
 
     Navigator.pop(context, 'updated');
   }
@@ -334,7 +325,7 @@ class _EditCustomizableItemState extends State<EditCustomizableItem> {
         appBar: AppBar(
           backgroundColor: adminAppbar,
           elevation: 0,
-          title: Text('Edit Customizable Item',
+          title: Text('Edit Item',
               style: GoogleFonts.poppins(
                 fontSize: screenHeight * 0.03,
                 color: white,
@@ -369,6 +360,25 @@ class _EditCustomizableItemState extends State<EditCustomizableItem> {
                   ),
                   const SizedBox(height: 16),
                   _buildPriceField(screenHeight),
+                  SizedBox(height: screenHeight * 0.04),
+                  Text(
+                    "Enter Model Dimensions (in cm)",
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: screenHeight * 0.02),
+
+                  // Height (Y-axis)
+                  buildDimensionField(context, "Height (Y-Axis)",
+                      "Enter height", heightController),
+
+                  // Width (X-axis)
+                  buildDimensionField(context, "Width (X-Axis)", "Enter width",
+                      widthController),
+
+                  // Space / Space (Z-axis)
+                  buildDimensionField(context, "Space (Z-Axis)", "Enter space",
+                      spaceController),
+
                   const SizedBox(height: 24),
                   CustomButton(
                     buttonText: 'Pick an Image',
@@ -378,6 +388,8 @@ class _EditCustomizableItemState extends State<EditCustomizableItem> {
                     buttonFontSize: screenHeight * 0.02,
                     buttonBorder: BorderSide(color: appColor),
                   ),
+                  const SizedBox(height: 12),
+
                   const SizedBox(height: 24),
                   _buildImageList(screenWidth, screenHeight),
                   const SizedBox(height: 16),
@@ -559,7 +571,7 @@ class _EditCustomizableItemState extends State<EditCustomizableItem> {
               'No 3D model selected',
               style: GoogleFonts.poppins(
                 fontSize: height * 0.018,
-                color: grey,
+                color: Colors.grey,
               ),
             ),
           );
