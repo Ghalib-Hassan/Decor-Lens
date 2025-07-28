@@ -278,33 +278,65 @@ class _AddItemScreenState extends State<AddItemScreen> {
 
                   // 3D Model Picker
                   sectionTitle("3D Model (Optional)", screenHeight),
-                  GestureDetector(
-                    onTap: () => pick3DFile(),
-                    child: glbFile != null
-                        ? AnimatedContainer(
-                            duration: 500.ms,
-                            width: double.infinity,
-                            height: screenHeight * 0.28,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(16),
-                              color: Colors.grey.shade100,
-                              border: Border.all(color: Colors.grey.shade400),
+                  glbFile != null
+                      ? Column(
+                          children: [
+                            GestureDetector(
+                              onTap: () => pick3DFile(),
+                              child: AnimatedContainer(
+                                duration: 500.ms,
+                                width: double.infinity,
+                                height: screenHeight * 0.28,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(16),
+                                  color: Colors.grey.shade100,
+                                  border:
+                                      Border.all(color: Colors.grey.shade400),
+                                ),
+                                child: ModelViewer(
+                                  src: "file://${glbFile!.path}",
+                                  iosSrc: "file://${glbFile!.path}",
+                                  alt: "3D Model",
+                                  ar: true,
+                                  autoRotate: true,
+                                  cameraControls: true,
+                                  backgroundColor: Colors.transparent,
+                                ),
+                              ).animate().slideY(duration: 600.ms),
                             ),
-                            child: ModelViewer(
-                              src: "file://${glbFile!.path}",
-                              iosSrc: "file://${glbFile!.path}",
-                              alt: "3D Model",
-                              ar: true,
-                              autoRotate: true,
-                              cameraControls: true,
-                              backgroundColor: Colors.transparent,
+                            const SizedBox(height: 12),
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton.icon(
+                                onPressed: () {
+                                  setState(() {
+                                    glbFile = null;
+                                  });
+                                },
+                                icon: const Icon(Icons.delete_outline,
+                                    color: Colors.red),
+                                label: Text("Remove Model",
+                                    style: TextStyle(color: red)),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.grey.shade200,
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    side:
+                                        BorderSide(color: red.withOpacity(0.5)),
+                                  ),
+                                ),
+                              ),
                             ),
-                          ).animate().slideY(duration: 600.ms)
-                        : buildUploadHint(
-                            icon: Icons.threed_rotation,
-                            text: 'Upload 3D Model (if any)',
-                            height: screenHeight),
-                  ),
+                          ],
+                        )
+                      : GestureDetector(
+                          onTap: () => pick3DFile(),
+                          child: buildUploadHint(
+                              icon: Icons.threed_rotation,
+                              text: 'Upload 3D Model (if any)',
+                              height: screenHeight),
+                        ),
 
                   SizedBox(height: screenHeight * 0.04),
 
@@ -327,7 +359,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
                       maxLength: 20),
                   buildTextField(
                       itemDescription, 'Item Description', screenHeight,
-                      maxLines: 3),
+                      maxLines: 5),
                   buildPriceField(itemPrice, 'Item Price', screenHeight),
 
                   SizedBox(height: screenHeight * 0.05),

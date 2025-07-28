@@ -54,6 +54,7 @@ class AdminItemService {
         var uploadUri = Uri.parse(
             "https://api.cloudinary.com/v1_1/${dotenv.env['CLOUDINARY_CLOUD_NAME']}/raw/upload");
         var request = http.MultipartRequest('POST', uploadUri);
+        print("Cloud Name: ${dotenv.env['CLOUDINARY_CLOUD_NAME']}");
 
         request.files
             .add(await http.MultipartFile.fromPath('file', glbFile.path));
@@ -61,6 +62,11 @@ class AdminItemService {
 
         var response = await request.send();
         var responseBody = await response.stream.bytesToString();
+        if (response.statusCode != 200) {
+          print('Status Code: ${response.statusCode}');
+          print('Response Body: $responseBody');
+          throw Exception('Failed to upload 3D model');
+        }
 
         if (response.statusCode == 200) {
           var jsonResponse = jsonDecode(responseBody);

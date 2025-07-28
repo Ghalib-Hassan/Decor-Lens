@@ -165,7 +165,7 @@ class _AddCustomizableItemState extends State<AddCustomizableItem> {
           backgroundColor: adminAppbar,
           elevation: 4,
           title: Text(
-            'Add New Item',
+            'Add Custom Item',
             style: GoogleFonts.poppins(
               fontSize: screenHeight * 0.03,
               color: white,
@@ -284,8 +284,7 @@ class _AddCustomizableItemState extends State<AddCustomizableItem> {
                   buildTextField(itemName, 'Item Name', screenHeight,
                       maxLength: 20),
                   buildTextField(
-                      itemDescription, 'Item Description', screenHeight,
-                      maxLines: 3),
+                      itemDescription, 'Item Description', screenHeight),
                   buildPriceField(itemPrice, 'Item Price', screenHeight),
 
                   SizedBox(height: screenHeight * 0.05),

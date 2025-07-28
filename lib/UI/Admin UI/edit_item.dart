@@ -355,8 +355,6 @@ class _EditItemsState extends State<EditItems> {
                     controller: itemDescriptionController,
                     hint: 'Item Description',
                     screenHeight: screenHeight,
-                    maxLines: 4,
-                    maxLength: 150,
                   ),
                   const SizedBox(height: 16),
                   _buildPriceField(screenHeight),
