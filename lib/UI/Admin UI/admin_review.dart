@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:decor_lens/Services/send_notification_service.dart';
 import 'package:decor_lens/Utils/colors.dart';
 import 'package:decor_lens/Widgets/appbar.dart';
 import 'package:decor_lens/Widgets/snackbar.dart';
@@ -155,49 +156,131 @@ class _AdminReviewScreenState extends State<AdminReviewScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // Header Row with icons
+                            // Header: Reviewer Avatar + Admin Controls
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Icon(Icons.person),
                                 Row(
                                   children: [
-                                    IconButton(
-                                      icon: Icon(Icons.reply, color: black),
-                                      onPressed: () =>
-                                          _showReplyDialog(context, review.id),
+                                    CircleAvatar(
+                                      radius: 18,
+                                      backgroundColor: Colors.grey.shade300,
+                                      child: Text(
+                                        (review['name'] ?? 'A')[0]
+                                            .toUpperCase(),
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: black,
+                                        ),
+                                      ),
                                     ),
-                                    IconButton(
-                                      icon: Icon(Icons.delete,
-                                          color: red, size: 20),
-                                      onPressed: () =>
-                                          _deleteUserReview(review.id),
+                                    SizedBox(width: 10),
+                                    Text(
+                                      review['name'] ?? 'Anonymous',
+                                      style: GoogleFonts.nunitoSans(
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: screenHeight * 0.019,
+                                        color: black,
+                                      ),
                                     ),
+                                  ],
+                                ),
+                                Row(
+                                  children: [
+                                    if (review['admin_approval'] == false) ...[
+                                      ElevatedButton.icon(
+                                        onPressed: () =>
+                                            _approveReview(review.id),
+                                        icon: Icon(
+                                          Icons.check,
+                                          size: 14,
+                                          color: white,
+                                        ),
+                                        label: Text('Approve',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              color: white,
+                                            )),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Colors.green,
+                                          padding: EdgeInsets.symmetric(
+                                              horizontal: 10, vertical: 6),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                          ),
+                                        ),
+                                      ),
+                                      SizedBox(width: 8),
+                                      ElevatedButton.icon(
+                                        onPressed: () =>
+                                            _deleteUserReview(review.id),
+                                        icon: Icon(
+                                          Icons.delete_forever,
+                                          size: 14,
+                                          color: white,
+                                        ),
+                                        label: Text('Delete',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              color: white,
+                                            )),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Colors.red,
+                                          padding: EdgeInsets.symmetric(
+                                              horizontal: 10, vertical: 6),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                          ),
+                                        ),
+                                      ),
+                                    ] else ...[
+                                      IconButton(
+                                        tooltip: 'Reply to Review',
+                                        icon: Icon(Icons.reply,
+                                            color: Colors.blueGrey),
+                                        onPressed: () => _showReplyDialog(
+                                            context, review.id),
+                                      ),
+                                      IconButton(
+                                        tooltip: 'Delete Review',
+                                        icon: Icon(Icons.delete_outline,
+                                            color: red),
+                                        onPressed: () =>
+                                            _deleteUserReview(review.id),
+                                      ),
+                                    ],
                                   ],
                                 ),
                               ],
                             ),
 
-                            // Reviewer name and date
+                            SizedBox(height: 6),
+
+                            // Review date
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
-                                  review['name'] ?? 'Anonymous',
+                                  'Reviewed on',
                                   style: GoogleFonts.nunitoSans(
-                                    color: black,
-                                    fontSize: screenHeight * 0.02,
+                                    fontSize: screenHeight * 0.014,
+                                    color: Colors.grey.shade600,
                                   ),
                                 ),
                                 Text(
                                   review['date'] ?? '',
                                   style: GoogleFonts.nunitoSans(
-                                    color: grey,
-                                    fontSize: screenHeight * 0.015,
+                                    fontSize: screenHeight * 0.014,
+                                    color: Colors.grey.shade600,
                                   ),
                                 ),
                               ],
                             ),
+
+                            SizedBox(height: 8),
 
                             // Star Rating
                             Row(
@@ -205,24 +288,27 @@ class _AdminReviewScreenState extends State<AdminReviewScreen> {
                                 5,
                                 (i) => Icon(
                                   i < (review['stars'] ?? 0)
-                                      ? Icons.star
-                                      : Icons.star_border,
-                                  size: 15,
+                                      ? Icons.star_rounded
+                                      : Icons.star_border_rounded,
                                   color: yellow,
+                                  size: 18,
                                 ),
                               ),
                             ),
-                            SizedBox(height: screenHeight * 0.01),
 
-                            // User Review Text
+                            SizedBox(height: 10),
+
+                            // Review Text
                             Text(
                               review['review'] ?? '',
-                              style: GoogleFonts.nunitoSans(
-                                color: grey,
-                                fontSize: screenHeight * 0.018,
-                              ),
                               textAlign: TextAlign.justify,
+                              style: GoogleFonts.nunitoSans(
+                                fontSize: screenHeight * 0.017,
+                                color: black.withOpacity(0.85),
+                                height: 1.4,
+                              ),
                             ),
+
                             SizedBox(height: screenHeight * 0.01),
 
                             // Admin Reply Section
@@ -237,8 +323,12 @@ class _AdminReviewScreenState extends State<AdminReviewScreen> {
                               builder: (context, replySnapshot) {
                                 if (replySnapshot.connectionState ==
                                     ConnectionState.waiting) {
-                                  return const Center(
-                                      child: CircularProgressIndicator());
+                                  return SizedBox(
+                                    height: 40,
+                                    child: Center(
+                                        child: CircularProgressIndicator(
+                                            strokeWidth: 1.5)),
+                                  );
                                 }
 
                                 if (replySnapshot.hasData &&
@@ -247,62 +337,61 @@ class _AdminReviewScreenState extends State<AdminReviewScreen> {
                                       replySnapshot.data!.docs[0];
 
                                   return Container(
-                                    margin:
-                                        const EdgeInsets.symmetric(vertical: 5),
-                                    padding: const EdgeInsets.all(8.0),
+                                    margin: const EdgeInsets.symmetric(
+                                        vertical: 10),
+                                    padding: const EdgeInsets.all(12),
                                     decoration: BoxDecoration(
-                                      color: grey.withOpacity(0.1),
+                                      color: Colors.grey.shade100,
                                       borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(
+                                          color: Colors.grey.shade300),
                                     ),
                                     child: Column(
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
-                                        SizedBox(height: 10),
-                                        Divider(),
+                                        Divider(
+                                            height: 1,
+                                            color: Colors.grey.shade400),
+                                        SizedBox(height: 8),
                                         Row(
                                           mainAxisAlignment:
                                               MainAxisAlignment.spaceBetween,
                                           children: [
                                             Text(
-                                              'Seller Replied:',
+                                              'Seller replied:',
                                               style: GoogleFonts.nunitoSans(
-                                                color: black,
                                                 fontWeight: FontWeight.bold,
-                                                fontSize: screenHeight * 0.02,
+                                                fontSize: screenHeight * 0.017,
+                                                color: Colors.black87,
                                               ),
                                             ),
                                             IconButton(
-                                              icon: Icon(Icons.delete,
+                                              icon: Icon(Icons.delete_outline,
                                                   color: red, size: 20),
                                               onPressed: () =>
                                                   _deleteAdminReply(review.id),
                                             ),
                                           ],
                                         ),
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Expanded(
-                                              child: Text(
-                                                adminReply['reply'] ?? '',
-                                                style: GoogleFonts.nunitoSans(
-                                                  color: black,
-                                                  fontSize: screenHeight * 0.02,
-                                                ),
-                                              ),
-                                            ),
-                                            Text(
-                                              adminReply['date'] ?? '',
-                                              style: GoogleFonts.nunitoSans(
-                                                color: black,
-                                                fontSize: screenHeight * 0.015,
-                                              ),
-                                            ),
-                                          ],
+                                        SizedBox(height: 4),
+                                        Text(
+                                          adminReply['reply'] ?? '',
+                                          style: GoogleFonts.nunitoSans(
+                                            fontSize: screenHeight * 0.017,
+                                            color:
+                                                Colors.black.withOpacity(0.85),
+                                            height: 1.4,
+                                          ),
                                         ),
-                                        SizedBox(height: screenHeight * 0.01),
+                                        SizedBox(height: 6),
+                                        Text(
+                                          adminReply['date'] ?? '',
+                                          style: GoogleFonts.nunitoSans(
+                                            fontSize: screenHeight * 0.014,
+                                            color: Colors.grey.shade600,
+                                          ),
+                                        ),
                                       ],
                                     ),
                                   );
@@ -323,6 +412,33 @@ class _AdminReviewScreenState extends State<AdminReviewScreen> {
         ),
       ),
     );
+  }
+
+  void _approveReview(String reviewId) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('Reviews and Ratings')
+          .doc(widget.name)
+          .collection('reviews')
+          .doc(reviewId)
+          .update({'admin_approval': true});
+
+      customSnackbar(
+        title: 'Approved',
+        message: 'Review has been approved!',
+        titleColor: Colors.green,
+        icon: Icons.check_circle,
+        iconColor: Colors.green,
+      );
+    } catch (e) {
+      customSnackbar(
+        title: 'Error',
+        message: 'Failed to approve review.',
+        titleColor: red,
+        icon: Icons.error,
+        iconColor: red,
+      );
+    }
   }
 
   // Reply Dialog
@@ -401,9 +517,8 @@ class _AdminReviewScreenState extends State<AdminReviewScreen> {
         .collection('reviews')
         .doc(reviewId);
 
-    // final reviewSnap = await reviewRef.get();
-    // final userToken = reviewSnap['fcm_token']; // get FCM token
-    // final userId = reviewSnap['user_id']; // optional if used in navigation
+    final reviewSnap = await reviewRef.get();
+    final userToken = reviewSnap['fcm_token']; // get FCM token
 
     await reviewRef.collection('adminReplies').add({
       'reply': reply,
@@ -411,13 +526,17 @@ class _AdminReviewScreenState extends State<AdminReviewScreen> {
     });
 
     // Send Notification
-    // await SendNotificationService.sendNotificationUsingApi(
-    //   token: userToken,
-    //   title: 'Admin replied to your review',
-    //   body: reply,
-    //   data: { 'screen': 'review_screen' },
-    // );
-    // print('send');
+    await SendNotificationService.sendNotificationUsingApi(
+      token: userToken,
+      title: 'Admin replied to your review',
+      body: reply,
+      topic: null,
+      data: {},
+    );
+    print('send');
+    print(userToken);
+    print(reviewSnap);
+    print(reviewId);
   }
 
   // Delete the admin reply
@@ -443,5 +562,17 @@ class _AdminReviewScreenState extends State<AdminReviewScreen> {
         .collection('reviews')
         .doc(reviewId)
         .delete();
+
+    final repliesSnapshot = await FirebaseFirestore.instance
+        .collection('Reviews and Ratings')
+        .doc(widget.name)
+        .collection('reviews')
+        .doc(reviewId)
+        .collection('adminReplies')
+        .get();
+
+    if (repliesSnapshot.docs.isNotEmpty) {
+      await repliesSnapshot.docs.first.reference.delete();
+    }
   }
 }

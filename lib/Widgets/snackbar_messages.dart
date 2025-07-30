@@ -141,7 +141,7 @@ class SnackbarMessages {
   static void cartEmpty() => customSnackbar(
         title: '🛒 Cart Empty',
         message: 'Your cart is empty!',
-        titleColor: Colors.red,
+        titleColor: red,
       );
 
   static void removeFromCart() => customSnackbar(
@@ -159,96 +159,97 @@ class SnackbarMessages {
   static void favoriteRemoved(String itemName) => customSnackbar(
         title: "💔 Favorite Removed",
         message: "$itemName removed from favorites.",
-        titleColor: Colors.red,
+        titleColor: red,
       );
 
   static void failedToAddFavorite() => customSnackbar(
         title: '❗ Error',
         message: 'Failed to add to favorites.',
-        titleColor: Colors.red,
+        titleColor: red,
       );
 
   // 💳 Payment
   static void paymentSuccess() => customSnackbar(
         title: '✅ Paid Successfully',
         message: 'Your order has been paid successfully.',
-        titleColor: Colors.green,
+        titleColor: green,
       );
 
   static void paymentCancelled() => customSnackbar(
         title: '❌ Payment Cancelled',
         message: 'Your payment was cancelled.',
-        titleColor: Colors.red,
+        titleColor: red,
       );
 
   static void paymentFailed() => customSnackbar(
         title: '💳 Payment Failed',
         message: 'Unexpected error occurred while processing payment.',
-        titleColor: Colors.red,
+        titleColor: red,
       );
 
   // 🛠️ Customization
   static void customizeFirst() => customSnackbar(
         title: '⚠️ Customize First',
         message: 'Please customize the product first.',
-        titleColor: Colors.red,
+        titleColor: red,
       );
 
   static void enterAllDimensions() => customSnackbar(
         title: '📏 Fields Required',
         message: 'Please enter all dimensions.',
-        titleColor: Colors.red,
+        titleColor: red,
       );
 
   static void dimensionsUpdated() => customSnackbar(
         title: '✅ Dimensions Updated',
         message: 'Dimensions updated successfully.',
-        titleColor: Colors.green,
+        titleColor: green,
       );
 
   static void customizationDone() => customSnackbar(
         title: '🎉 Customization Done',
         message: 'Customization done successfully.',
-        titleColor: Colors.green,
+        titleColor: green,
       );
 
   // ✏️ Profile / Comments
   static void profileUpdated() => customSnackbar(
         title: '👤 Profile Updated',
         message: 'Your profile has been updated successfully.',
-        titleColor: Colors.deepPurple,
+        titleColor: deepPurple,
       );
 
   static void commentPosted() => customSnackbar(
-        title: '✅ Success',
-        message: 'Review posted successfully.',
-        titleColor: Colors.green,
+        title: '✅ Review Submitted',
+        message:
+            'Your review has been submitted and is under admin review. It will be visible once approved.',
+        titleColor: green,
       );
 
   static void failedToPostComment() => customSnackbar(
         title: '❗ Error',
         message: 'Failed to post review',
-        titleColor: Colors.red,
+        titleColor: red,
       );
 
   // 📦 Order
   static void orderFailed() => customSnackbar(
         title: '❌ Failed 😞',
         message: 'Failed to place order. Please try again.',
-        titleColor: Colors.red,
+        titleColor: red,
       );
 
   // 🧾 Field Validations
   static void emptyFieldsError() => customSnackbar(
         title: '❌ Error',
         message: 'Fields should not be empty.',
-        titleColor: Colors.red,
+        titleColor: red,
       );
 
   static void requiredFieldsError() => customSnackbar(
         title: '⚠️ Error',
         message: 'Please fill in all the required fields!',
-        titleColor: Colors.red,
+        titleColor: red,
       );
 
   static void fillAllFieldsError() => customSnackbar(
@@ -314,5 +315,12 @@ class SnackbarMessages {
         title: '❌ Account Not Verified',
         message: 'Please create an account and verify your email.',
         titleColor: red,
+      );
+
+  static void unauthorizedReviewAttempt() => customSnackbar(
+        title: '🚫 Unauthorized',
+        message:
+            'You are not allowed to write a review for this product. Please purchase and receive it first.',
+        titleColor: Colors.redAccent,
       );
 }

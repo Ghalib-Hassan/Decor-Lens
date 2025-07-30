@@ -344,9 +344,28 @@ class _HomeScreenState extends State<HomeScreen> {
                                                     images.first,
                                                     fit: BoxFit.cover,
                                                     width: double.infinity,
+                                                    height: double.infinity,
+                                                    errorBuilder: (context,
+                                                            error,
+                                                            stackTrace) =>
+                                                        Center(
+                                                      child: Icon(
+                                                          Icons.broken_image,
+                                                          color: grey),
+                                                    ),
                                                   )
-                                                : const Center(
-                                                    child: Text('No Image')),
+                                                : Container(
+                                                    width: double.infinity,
+                                                    height: double.infinity,
+                                                    color:
+                                                        grey.withOpacity(0.2),
+                                                    alignment: Alignment.center,
+                                                    child: Text(
+                                                      'No Image',
+                                                      style: TextStyle(
+                                                          color: grey),
+                                                    ),
+                                                  ),
                                           ),
                                           Positioned(
                                             top: 8,
@@ -391,7 +410,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                                 );
                                               },
                                             ),
-                                          )
+                                          ),
                                         ],
                                       ),
                                     ),

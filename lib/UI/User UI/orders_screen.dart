@@ -165,7 +165,11 @@ class _MyOrdersState extends State<MyOrders> {
 
         for (int i = 0; i < productPrices.length; i++) {
           int quantity = int.tryParse(productQuantities[i]) ?? 1;
-          double pricePerItem = double.tryParse(productPrices[i]) ?? 0.0;
+          double pricePerItem = double.tryParse(
+                productPrices[i].replaceAll(',', ''),
+              ) ??
+              0.0;
+
           double totalProductPrice = pricePerItem * quantity;
           if (isCardPayment) totalProductPrice *= conversionRate;
           totalAmount += totalProductPrice;
@@ -214,6 +218,11 @@ class _MyOrdersState extends State<MyOrders> {
                         fontSize: 15,
                         color: isDarkMode ? white : black),
                     CustomRichText(
+                        label: 'Phone Number',
+                        value: order['Phone_number'],
+                        fontSize: 15,
+                        color: isDarkMode ? white : black),
+                    CustomRichText(
                         label: 'Payment Method',
                         value: order['delivery_method'],
                         fontSize: 15,
@@ -243,8 +252,11 @@ class _MyOrdersState extends State<MyOrders> {
                   itemCount: productNames.length,
                   itemBuilder: (context, index) {
                     int quantity = int.tryParse(productQuantities[index]) ?? 1;
-                    double pricePerItem =
-                        double.tryParse(productPrices[index]) ?? 0.0;
+                    double pricePerItem = double.tryParse(
+                          productPrices[index].replaceAll(',', ''),
+                        ) ??
+                        0.0;
+
                     double totalProductPrice = pricePerItem * quantity;
                     if (isCardPayment) totalProductPrice *= conversionRate;
 

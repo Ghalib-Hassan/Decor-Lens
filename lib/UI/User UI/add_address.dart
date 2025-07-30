@@ -27,7 +27,7 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
   final TextEditingController phoneController = TextEditingController();
   final TextEditingController zipCodeController = TextEditingController();
   String setAddress = '';
-  String? city;
+  String city = '';
   bool isLoading = false;
   LatLng? selectedPosition;
 
@@ -85,10 +85,11 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
 
         setState(() {
           setAddress = address;
-          city = place.locality;
+          city = place.locality ?? 'Unknown City';
         });
 
         print("Resolved Address: $setAddress");
+        print("City: $city");
       } else {
         print("No address found.");
         setState(() {

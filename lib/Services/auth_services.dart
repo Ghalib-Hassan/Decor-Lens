@@ -18,7 +18,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
+  final FirebaseFirestore dbFirestore = FirebaseFirestore.instance;
 
   Future<void> signUpUser({
     required String name,
@@ -59,8 +59,10 @@ class AuthService {
         return;
       }
 
-      QuerySnapshot querySnapshot =
-          await _db.collection('Users').where('Email', isEqualTo: email).get();
+      QuerySnapshot querySnapshot = await dbFirestore
+          .collection('Users')
+          .where('Email', isEqualTo: email)
+          .get();
       if (querySnapshot.docs.isNotEmpty) {
         SnackbarMessages.emailAlreadyRegistered();
         onError();
@@ -79,7 +81,7 @@ class AuthService {
         await user.sendEmailVerification();
         await user.reload();
 
-        await _db.collection('Users').doc(user.uid).set({
+        await dbFirestore.collection('Users').doc(user.uid).set({
           'Name': name,
           'Email': email,
           'Password': password,
@@ -87,6 +89,7 @@ class AuthService {
           'User_id': user.uid,
           'Profile_picture': null,
           'is_blocked': false,
+          'isFirstLogin': true
         });
 
         // ✅ Save flag using SharedPreferences
@@ -290,8 +293,9 @@ class AuthService {
             "Name": user.displayName ?? "No Name",
             "Email": user.email,
             "User_id": user.uid,
-            "is_blocked": false, // Default to not blocked
-            'Profile_picture': null
+            "is_blocked": false,
+            'Profile_picture': null,
+            'isFirstLogin': true
           };
           await userDocRef.set(userData);
           debugPrint("User details added to Firestore.");
@@ -377,6 +381,7 @@ class AuthService {
             "User_id": user.uid,
             "is_blocked": false,
             'Profile_picture': user.photoURL,
+            'isFirstLogin': true
           };
           await userDocRef.set(userData);
           debugPrint("Facebook user details added to Firestore.");

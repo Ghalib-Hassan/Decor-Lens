@@ -303,9 +303,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   // Collect user input and validation
                   String userName = shippingAddress!['Name'];
                   String userAddress = shippingAddress!['Address'];
+                  String userPhone = shippingAddress!['Phone_number'];
 
                   print(shippingAddress!['Name']);
                   print(shippingAddress!['Address']);
+                  print(shippingAddress!['Phone_number']);
                   String adminResponse = 'Processing';
 
                   String formatDateTime(DateTime dateTime) {
@@ -374,6 +376,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     'order_no': newOrderNo, // Unique incremental order number
                     'order_by': userName,
                     'address': userAddress,
+                    'Phone_number': userPhone,
                     'city': city,
                     'order_time': orderTime,
                     'delivery_method': selectedPaymentMethod,

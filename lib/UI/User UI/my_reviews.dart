@@ -212,13 +212,9 @@ Widget buildReviewCard({
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      Icon(Icons.currency_rupee,
-                          size: screenWidth * 0.038,
-                          color: isDarkMode
-                              ? Colors.greenAccent
-                              : Colors.green.shade800),
+                      //
                       Text(
-                        price,
+                        "Rs $price",
                         style: GoogleFonts.poppins(
                           fontWeight: FontWeight.w600,
                           fontSize: screenWidth * 0.038,

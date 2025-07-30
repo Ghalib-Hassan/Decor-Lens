@@ -18,6 +18,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:model_viewer_plus/model_viewer_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:readmore/readmore.dart';
+import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
 class ProductScreen extends StatefulWidget {
   final List<String> image;
@@ -50,12 +51,15 @@ class ProductScreen extends StatefulWidget {
 class _ProductScreenState extends State<ProductScreen> {
   // late String mainImage;
   bool isLoading = false;
+  late PageController _pageController;
+  int _currentIndex = 0;
 
   @override
   void initState() {
     super.initState();
     // TODO: implement initState
     checkUserBlockedStatus();
+    _pageController = PageController();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final result = Get.arguments as Map<String, dynamic>?;
@@ -71,6 +75,12 @@ class _ProductScreenState extends State<ProductScreen> {
         }
       }
     });
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
   }
 
   Future<void> checkUserBlockedStatus() async {
@@ -117,8 +127,9 @@ class _ProductScreenState extends State<ProductScreen> {
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
 
-    final thumbnailImages =
-        widget.image.where((img) => img != provider.mainImage).toList();
+    // final thumbnailImages =
+    //     widget.image.where((img) => img != provider.mainImage).toList();
+    final mediaPages = buildMediaPages(screenWidth, screenHeight);
 
     return SafeArea(
       child: Scaffold(
@@ -129,103 +140,143 @@ class _ProductScreenState extends State<ProductScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               /// Main Display (Image or 3D)
+
               Center(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: provider.isModelSelected &&
-                          widget.model != null &&
-                          widget.model!.isNotEmpty
-                      ? Container(
-                          height: screenHeight * 0.5,
-                          width: screenWidth * 0.85,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(12),
-                            color: Colors.grey.shade100,
-                          ),
-                          child: ModelViewer(
-                            src: widget.model.toString(),
-                            iosSrc: widget.model.toString(),
-                            alt: "3D Model",
-                            ar: true,
-                            autoRotate: true,
-                            cameraControls: true,
-                            backgroundColor: Colors.transparent,
-                          ),
-                        )
-                      : Image.network(
-                          provider.mainImage,
-                          height: screenHeight * 0.5,
-                          width: screenWidth * 0.85,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) =>
-                              const Icon(Icons.image_not_supported),
-                        ),
-                ),
-              ).animate().fadeIn(duration: 600.ms).slideY(),
-
-              SizedBox(height: screenHeight * 0.02),
-
-              /// Thumbnails
-              if (thumbnailImages.isNotEmpty ||
-                  (widget.model != null && widget.model!.isNotEmpty))
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                child: Column(
                   children: [
-                    ...thumbnailImages.map((img) {
-                      return GestureDetector(
-                        onTap: () => provider.switchImage(img),
-                        child: buildThumbnail(img, screenWidth),
-                      );
-                    }),
-                    // ✅ Image thumbnail even if only one image
-                    if (provider.mainImage.isNotEmpty)
-                      GestureDetector(
-                        onTap: () => provider.switchImage(provider.mainImage),
-                        child: buildThumbnail(provider.mainImage, screenWidth),
-                      ),
-
-                    // ✅ 3D model thumbnail
-                    if (widget.model != null && widget.model!.isNotEmpty)
-                      GestureDetector(
-                        onTap: provider.switchTo3DModel,
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(
-                              horizontal: screenWidth * 0.01),
-                          child: Container(
-                            width: screenWidth * 0.15,
-                            height: screenWidth * 0.15,
-                            decoration: BoxDecoration(
-                              boxShadow: [
-                                BoxShadow(
-                                  color: black.withOpacity(0.08),
-                                  blurRadius: 15,
-                                  spreadRadius: 2,
-                                  offset: const Offset(0, 6),
-                                ),
-                                BoxShadow(
-                                  color: white.withOpacity(0.6),
-                                  blurRadius: 8,
-                                  spreadRadius: -6,
-                                  offset: const Offset(-4, -4),
-                                ),
-                              ],
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                color: provider.isModelSelected
-                                    ? appColor
-                                    : Colors.grey.shade300,
-                                width: 2,
-                              ),
-                              color: Colors.grey.shade200,
-                            ),
-                            child: const Center(
-                              child: Icon(Icons.threed_rotation, size: 28),
-                            ),
+                    SizedBox(
+                      height: screenHeight * 0.5,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          PageView(
+                            controller: _pageController,
+                            onPageChanged: (index) {
+                              setState(() => _currentIndex = index);
+                            },
+                            children: mediaPages,
                           ),
-                        ).animate().fadeIn(duration: 500.ms).slideY(),
+
+                          // ← Left Arrow
+                          if (_currentIndex > 0)
+                            Positioned(
+                              left: 10,
+                              child: IconButton(
+                                icon: const Icon(
+                                    Icons.arrow_back_ios_new_rounded,
+                                    size: 28,
+                                    color: Colors.black87),
+                                onPressed: () {
+                                  if (_currentIndex > 0) {
+                                    _pageController.previousPage(
+                                        duration:
+                                            const Duration(milliseconds: 300),
+                                        curve: Curves.easeInOut);
+                                  }
+                                },
+                              ),
+                            ),
+
+                          // → Right Arrow
+                          if (_currentIndex < mediaPages.length - 1)
+                            Positioned(
+                              right: 10,
+                              child: IconButton(
+                                icon: const Icon(
+                                    Icons.arrow_forward_ios_rounded,
+                                    size: 28,
+                                    color: Colors.black87),
+                                onPressed: () {
+                                  if (_currentIndex < mediaPages.length - 1) {
+                                    _pageController.nextPage(
+                                        duration:
+                                            const Duration(milliseconds: 300),
+                                        curve: Curves.easeInOut);
+                                  }
+                                },
+                              ),
+                            ),
+                        ],
                       ),
+                    ),
+                    const SizedBox(height: 10),
+                    SmoothPageIndicator(
+                      controller: _pageController,
+                      count: mediaPages.length,
+                      effect: WormEffect(
+                        dotColor: Colors.grey.shade400,
+                        activeDotColor: Colors.blueAccent,
+                        dotHeight: 8,
+                        dotWidth: 8,
+                      ),
+                    ),
                   ],
-                ).animate().fadeIn(duration: 600.ms).scale(),
+                ),
+              ).animate().fadeIn(duration: 500.ms).slideY(),
+
+              // SizedBox(height: screenHeight * 0.02),
+
+              // /// Thumbnails
+              // if (thumbnailImages.isNotEmpty ||
+              //     (widget.model != null && widget.model!.isNotEmpty))
+              //   Row(
+              //     mainAxisAlignment: MainAxisAlignment.center,
+              //     children: [
+              //       ...thumbnailImages.map((img) {
+              //         return GestureDetector(
+              //           onTap: () => provider.switchImage(img),
+              //           child: buildThumbnail(img, screenWidth),
+              //         );
+              //       }),
+              //       // ✅ Image thumbnail even if only one image
+              //       if (provider.mainImage.isNotEmpty)
+              //         GestureDetector(
+              //           onTap: () => provider.switchImage(provider.mainImage),
+              //           child: buildThumbnail(provider.mainImage, screenWidth),
+              //         ),
+
+              //       // ✅ 3D model thumbnail
+              //       if (widget.model != null && widget.model!.isNotEmpty)
+              //         GestureDetector(
+              //           onTap: provider.switchTo3DModel,
+              //           child: Padding(
+              //             padding: EdgeInsets.symmetric(
+              //                 horizontal: screenWidth * 0.01),
+              //             child: Container(
+              //               width: screenWidth * 0.15,
+              //               height: screenWidth * 0.15,
+              //               decoration: BoxDecoration(
+              //                 boxShadow: [
+              //                   BoxShadow(
+              //                     color: black.withOpacity(0.08),
+              //                     blurRadius: 15,
+              //                     spreadRadius: 2,
+              //                     offset: const Offset(0, 6),
+              //                   ),
+              //                   BoxShadow(
+              //                     color: white.withOpacity(0.6),
+              //                     blurRadius: 8,
+              //                     spreadRadius: -6,
+              //                     offset: const Offset(-4, -4),
+              //                   ),
+              //                 ],
+              //                 borderRadius: BorderRadius.circular(10),
+              //                 border: Border.all(
+              //                   color: provider.isModelSelected
+              //                       ? appColor
+              //                       : Colors.grey.shade300,
+              //                   width: 2,
+              //                 ),
+              //                 color: Colors.grey.shade200,
+              //               ),
+              //               child: const Center(
+              //                 child: Icon(Icons.threed_rotation, size: 28),
+              //               ),
+              //             ),
+              //           ).animate().fadeIn(duration: 500.ms).slideY(),
+              //         ),
+              //     ],
+              //   ).animate().fadeIn(duration: 600.ms).scale(),
 
               SizedBox(height: screenHeight * 0.015),
 
@@ -335,59 +386,71 @@ class _ProductScreenState extends State<ProductScreen> {
                     ).animate().fade(duration: 500.ms),
                     SizedBox(height: screenHeight * 0.01),
                     StreamBuilder<QuerySnapshot>(
-                        stream: FirebaseFirestore.instance
-                            .collection('Reviews and Ratings')
-                            .doc(widget.name)
-                            .collection('reviews')
-                            .snapshots(),
-                        builder: (context, snapshot) {
-                          final reviews = snapshot.data?.docs ?? [];
-                          final totalReviews = reviews.length;
+                      stream: FirebaseFirestore.instance
+                          .collection('Reviews and Ratings')
+                          .doc(widget.name)
+                          .collection('reviews')
+                          .snapshots(),
+                      builder: (context, snapshot) {
+                        if (!snapshot.hasData) return SizedBox();
 
-                          double averageRating = 0.0;
-                          if (totalReviews > 0) {
-                            averageRating = reviews
-                                    .map((doc) => doc['stars'] as double)
-                                    .reduce((a, b) => a + b) /
-                                totalReviews;
-                          }
+                        final allReviews = snapshot.data!.docs;
 
-                          return Row(
-                            children: [
-                              Icon(
-                                Icons.star,
-                                size: screenWidth * 0.05,
-                                color: yellow,
+                        // ✅ Only include approved reviews
+                        final approvedReviews = allReviews
+                            .where((doc) => doc['admin_approval'] == true)
+                            .toList();
+
+                        final totalReviews = approvedReviews.length;
+
+                        double averageRating = 0.0;
+                        if (totalReviews > 0) {
+                          averageRating = approvedReviews
+                                  .map((doc) => doc['stars'] as double)
+                                  .reduce((a, b) => a + b) /
+                              totalReviews;
+                        }
+
+                        return Row(
+                          children: [
+                            Icon(
+                              Icons.star,
+                              size: screenWidth * 0.05,
+                              color: yellow,
+                            ),
+                            SizedBox(width: screenWidth * 0.02),
+                            Text(
+                              averageRating.toStringAsFixed(1),
+                              style: GoogleFonts.nunitoSans(
+                                color: isDarkMode ? white : black,
+                                fontWeight: FontWeight.bold,
+                                fontSize: screenWidth * 0.05,
                               ),
-                              SizedBox(width: screenWidth * 0.02),
-                              Text(
-                                averageRating.toStringAsFixed(1),
+                            ),
+                            SizedBox(width: screenWidth * 0.02),
+                            GestureDetector(
+                              onTap: () {
+                                Get.to(
+                                  () => UserComments(
+                                    price: widget.price,
+                                    image: widget.image[0],
+                                    name: widget.name,
+                                  ),
+                                  transition: Transition.rightToLeft,
+                                );
+                              },
+                              child: Text(
+                                '($totalReviews review${totalReviews > 1 ? 's' : ''})',
                                 style: GoogleFonts.nunitoSans(
-                                    color: isDarkMode ? white : black,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: screenWidth * 0.05),
-                              ),
-                              SizedBox(width: screenWidth * 0.02),
-                              GestureDetector(
-                                onTap: () {
-                                  Get.to(
-                                      () => UserComments(
-                                            price: widget.price,
-                                            image: widget.image[0],
-                                            name: widget.name,
-                                          ),
-                                      transition: Transition.rightToLeft);
-                                },
-                                child: Text(
-                                  '($totalReviews review${totalReviews > 1 ? 's' : ''})',
-                                  style: GoogleFonts.nunitoSans(
-                                      color: grey,
-                                      fontSize: screenWidth * 0.045),
+                                  color: grey,
+                                  fontSize: screenWidth * 0.045,
                                 ),
                               ),
-                            ],
-                          );
-                        }),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
                     SizedBox(height: screenHeight * 0.015),
                     ReadMoreText(
                       '${widget.description}.',
@@ -585,6 +648,41 @@ class _ProductScreenState extends State<ProductScreen> {
         ),
       ).animate().fadeIn(duration: 500.ms).slideY(),
     );
+  }
+
+  List<Widget> buildMediaPages(double screenWidth, double screenHeight) {
+    final media = [...widget.image];
+
+    if (widget.model != null && widget.model!.isNotEmpty) {
+      media.add("MODEL_VIEW");
+    }
+
+    return media.map((item) {
+      if (item == "MODEL_VIEW") {
+        return Container(
+          height: screenHeight * 0.5,
+          width: screenWidth * 0.85,
+          color: Colors.grey.shade100,
+          child: ModelViewer(
+            src: widget.model.toString(),
+            iosSrc: widget.model.toString(),
+            alt: "3D Model",
+            ar: true,
+            autoRotate: true,
+            cameraControls: true,
+            backgroundColor: Colors.transparent,
+          ),
+        );
+      } else {
+        return Image.network(
+          item,
+          fit: BoxFit.cover,
+          width: screenWidth * 0.85,
+          height: screenHeight * 0.5,
+          errorBuilder: (_, __, ___) => const Icon(Icons.broken_image),
+        );
+      }
+    }).toList();
   }
 
   void showCustomizationDialog(

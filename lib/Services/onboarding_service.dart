@@ -63,45 +63,37 @@ class _OnboardingServiceState extends State<OnboardingService> {
     final FirebaseAuth auth = FirebaseAuth.instance;
     final User? user = auth.currentUser;
 
-    // ✅ If not logged in → Show Login Screen
-    if (user == null) {
-      Get.offAll(() => UserLogin(),
-          transition: Transition.fadeIn,
-          duration: const Duration(milliseconds: 800));
-      return;
-    }
-
     try {
-      // ✅ Fetch admin email
+      // ✅ Not logged in → Login Screen
+      if (user == null) {
+        Get.offAll(() => OnboardingScreenOne(),
+            transition: Transition.fadeIn,
+            duration: const Duration(milliseconds: 800));
+        return;
+      }
+
+      // ✅ Admin Check
       final adminDoc = await FirebaseFirestore.instance
           .collection('Admin Credentials')
           .doc('admin_id')
           .get();
 
-      final adminEmail = adminDoc['email']?.toString().trim();
-
+      final adminEmail = adminDoc.data()?['email']?.toString().trim();
       if (adminEmail != null && user.email == adminEmail) {
-        // ✅ Navigate to Admin Home
         Get.offAll(() => const AdminHomePage(),
             transition: Transition.circularReveal,
             duration: const Duration(seconds: 1));
         return;
       }
 
-      // ✅ Check if it's the user's first time using the app
-      final userDoc = await FirebaseFirestore.instance
-          .collection('Users')
-          .doc(user.uid)
-          .get();
+      // ✅ Regular User Check
+      final userDocRef =
+          FirebaseFirestore.instance.collection('Users').doc(user.uid);
+      final userDoc = await userDocRef.get();
 
-      final isFirstLogin = userDoc['isFirstLogin'] ?? true;
-
-      if (isFirstLogin) {
-        // ✅ Show Onboarding screen once
-        await FirebaseFirestore.instance
-            .collection('Users')
-            .doc(user.uid)
-            .update({'isFirstLogin': false});
+      // ✅ If document doesn't exist → treat as first login
+      if (!userDoc.exists) {
+        await userDocRef.set({'isFirstLogin': false}, SetOptions(merge: true));
 
         Get.offAll(() => const OnboardingScreenOne(),
             transition: Transition.fadeIn,
@@ -109,17 +101,35 @@ class _OnboardingServiceState extends State<OnboardingService> {
         return;
       }
 
-      // ✅ Navigate to User Home
+      // ✅ If document exists, check first login flag
+      final isFirstLogin = userDoc.data()?['isFirstLogin'] ?? true;
+
+      if (isFirstLogin == true) {
+        await userDocRef.update({'isFirstLogin': false});
+
+        Get.offAll(() => const OnboardingScreenOne(),
+            transition: Transition.fadeIn,
+            duration: const Duration(milliseconds: 800));
+        return;
+      }
+
+      // ✅ Returning user → Home Screen
       Get.offAll(() => const HomeScreen(),
           transition: Transition.fadeIn,
           duration: const Duration(milliseconds: 800));
     } catch (e) {
-      debugPrint('⚠️ Error during navigation: $e');
+      debugPrint('⚠️ Navigation error: $e');
 
-      // ✅ Safe fallback if something fails
-      Get.offAll(() => const HomeScreen(),
-          transition: Transition.fadeIn,
-          duration: const Duration(milliseconds: 800));
+      // ✅ Safe fallback → Login or Home depending on auth
+      if (auth.currentUser == null) {
+        Get.offAll(() => UserLogin(),
+            transition: Transition.fadeIn,
+            duration: const Duration(milliseconds: 800));
+      } else {
+        Get.offAll(() => const HomeScreen(),
+            transition: Transition.fadeIn,
+            duration: const Duration(milliseconds: 800));
+      }
     }
   }
 

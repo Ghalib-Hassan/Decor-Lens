@@ -151,6 +151,12 @@ class NotificationService {
       String title = message.notification!.title ?? 'No Title';
       String body = message.notification!.body ?? 'No Body';
 
+      // ✅ Skip saving if this is the admin review reply
+      if (title == 'Admin replied to your review') {
+        debugPrint("⚠️ Skipping save for admin review response");
+        Get.find<NotificationController>().updateNotifications();
+        return;
+      }
       await saveNotificationToFirestore(title, body);
       debugPrint("Title: ${message.notification!.title}");
       debugPrint("Body: ${message.notification!.body}");

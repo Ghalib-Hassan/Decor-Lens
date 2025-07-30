@@ -82,6 +82,7 @@ dependencies:
   currency_converter: ^2.0.0
   flutter_stripe: ^10.0.0
   googleapis_auth: ^1.6.0
+  smooth_page_indicator: ^1.2.1
 
   # stripe_platform_interface: ^9.4.0
 

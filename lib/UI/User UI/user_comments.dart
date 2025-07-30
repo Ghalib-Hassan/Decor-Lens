@@ -1,6 +1,7 @@
 import 'package:animated_rating_stars/animated_rating_stars.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:decor_lens/Provider/dark_mode_provider.dart';
+import 'package:decor_lens/Services/notification_services.dart';
 import 'package:decor_lens/UI/Auth%20Screens/user_login.dart';
 import 'package:decor_lens/Utils/colors.dart';
 import 'package:decor_lens/Widgets/appbar.dart';
@@ -133,12 +134,18 @@ class _UserCommentsState extends State<UserComments> {
                         return const Center(child: CircularProgressIndicator());
                       }
 
-                      final reviews = snapshot.data?.docs ?? [];
-                      final totalReviews = reviews.length;
+                      final allReviews = snapshot.data?.docs ?? [];
+
+                      // ✅ Filter only approved reviews
+                      final approvedReviews = allReviews
+                          .where((doc) => doc['admin_approval'] == true)
+                          .toList();
+
+                      final totalReviews = approvedReviews.length;
 
                       double averageRating = 0.0;
                       if (totalReviews > 0) {
-                        averageRating = reviews
+                        averageRating = approvedReviews
                                 .map((doc) => doc['stars'] as double)
                                 .reduce((a, b) => a + b) /
                             totalReviews;
@@ -264,13 +271,31 @@ class _UserCommentsState extends State<UserComments> {
                           ),
                         );
                       }
+                      final approvedReviews = docs
+                          .where((doc) => doc['admin_approval'] == true)
+                          .toList();
+
+                      if (docs.isEmpty || approvedReviews.isEmpty) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          child: Center(
+                            child: Text(
+                              'No reviews found yet.',
+                              style: GoogleFonts.manrope(
+                                color: grey,
+                                fontSize: screenHeight * 0.015,
+                              ),
+                            ),
+                          ),
+                        );
+                      }
 
                       return ListView.builder(
                         physics: const NeverScrollableScrollPhysics(),
                         shrinkWrap: true,
-                        itemCount: docs.length,
+                        itemCount: approvedReviews.length,
                         itemBuilder: (context, index) {
-                          final review = docs[index];
+                          final review = approvedReviews[index];
                           return Container(
                             margin: const EdgeInsets.symmetric(
                                 vertical: 6, horizontal: 10),
@@ -508,8 +533,33 @@ class _UserCommentsState extends State<UserComments> {
         fonts: GoogleFonts.nunitoSans(
             color: isDarkMode ? black : white, fontSize: screenHeight * 0.02),
         buttonText: 'Write a review',
-        onPressed: () {
-          showReviewDialog(context);
+        onPressed: () async {
+          final userId = FirebaseAuth.instance.currentUser?.uid;
+          if (userId == null) {
+            SnackbarMessages.unauthorizedReviewAttempt();
+            return;
+          }
+
+          try {
+            final ordersSnapshot = await FirebaseFirestore.instance
+                .collection('Orders')
+                .where('User', isEqualTo: userId)
+                .where('admin_response', isEqualTo: 'Delivered')
+                .get();
+
+            bool isProductDelivered = ordersSnapshot.docs.any((doc) {
+              final names = doc['product_names']?.toString().split(',') ?? [];
+              return names.map((n) => n.trim()).contains(widget.name);
+            });
+
+            if (isProductDelivered) {
+              showReviewDialog(context);
+            } else {
+              SnackbarMessages.unauthorizedReviewAttempt();
+            }
+          } catch (e) {
+            SnackbarMessages.failedToPostComment();
+          }
         },
       ),
     );
@@ -589,10 +639,10 @@ class _UserCommentsState extends State<UserComments> {
             ),
             TextButton(
               onPressed: () async {
-                // NotificationService notificationService = NotificationService();
-                // String userToken =
-                //     await notificationService.getDeviceToken(); // ✅ Await here
-                // print('FCM Token: $userToken');
+                NotificationService notificationService = NotificationService();
+                String userToken =
+                    await notificationService.getDeviceToken(); // ✅ Await here
+                print('FCM Token: $userToken');
                 final currentDate = DateTime.now();
                 final formattedDate =
                     '${currentDate.day}/${currentDate.month}/${currentDate.year}';
@@ -618,7 +668,8 @@ class _UserCommentsState extends State<UserComments> {
                     'product_name': widget.name,
                     'product_price': widget.price,
                     'product_image': widget.image,
-                    // 'fcmToken': userToken, // store FCM token here
+                    'admin_approval': false,
+                    'fcm_token': userToken, // store FCM token here
                   });
                   SnackbarMessages.commentPosted();
 

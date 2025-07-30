@@ -216,7 +216,10 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen>
 
         for (int i = 0; i < productPrices.length; i++) {
           int quantity = int.tryParse(productQuantities[i]) ?? 1;
-          double pricePerItem = double.tryParse(productPrices[i]) ?? 0.0;
+          double pricePerItem = double.tryParse(
+                productPrices[i].replaceAll(',', ''),
+              ) ??
+              0.0;
           double totalProductPrice = pricePerItem * quantity;
 
           if (isCardPayment) {
@@ -254,8 +257,10 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen>
                     itemBuilder: (context, index) {
                       int quantity =
                           int.tryParse(productQuantities[index]) ?? 1;
-                      double pricePerItem =
-                          double.tryParse(productPrices[index]) ?? 0.0;
+                      double pricePerItem = double.tryParse(
+                            productPrices[index].replaceAll(',', ''),
+                          ) ??
+                          0.0;
                       double totalProductPrice = pricePerItem * quantity;
                       if (isCardPayment) {
                         totalProductPrice *= conversionRate;
@@ -350,6 +355,10 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen>
         CustomRichText(
             label: 'Address',
             value: order['address'],
+            fontSize: screenHeight * 0.018),
+        CustomRichText(
+            label: 'Phone Number',
+            value: order['Phone_number'],
             fontSize: screenHeight * 0.018),
         CustomRichText(
             label: 'Time',

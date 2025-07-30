@@ -55,18 +55,26 @@ void main() async {
   setupNotificationChannel(); // 👈 Add
 
   //Handle Foreground Firebase Notifications
-  FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+  FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
     debugPrint("🔔 Foreground Firebase Notification received");
 
     if (message.notification != null) {
       String title = message.notification!.title ?? 'No Title';
       String body = message.notification!.body ?? 'No Body';
 
-      saveNotificationToFirestore(title, body);
-      debugPrint("Title: ${message.notification!.title}");
-      debugPrint("Body: ${message.notification!.body}");
+      // ✅ Skip saving if this is the admin review reply
+      if (title == 'Admin replied to your review') {
+        debugPrint("⚠️ Skipping save for admin review response");
+        Get.find<NotificationController>().updateNotifications();
+        return;
+      }
 
-      // Update UI
+      // ✅ Save all other notifications
+      await saveNotificationToFirestore(title, body);
+      debugPrint("Title: $title");
+      debugPrint("Body: $body");
+
+      // ✅ Refresh notification screen
       Get.find<NotificationController>().updateNotifications();
     }
   });
@@ -155,6 +163,12 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
     String title = message.notification!.title ?? 'No Title';
     String body = message.notification!.body ?? 'No Body';
 
+    // ✅ Skip saving if this is the admin review reply
+    if (title == 'Admin replied to your review') {
+      debugPrint("⚠️ Skipping save for admin review response");
+      Get.find<NotificationController>().updateNotifications();
+      return;
+    }
     await saveNotificationToFirestore(title, body);
     debugPrint("Title: ${message.notification!.title}");
     debugPrint("Body: ${message.notification!.body}");

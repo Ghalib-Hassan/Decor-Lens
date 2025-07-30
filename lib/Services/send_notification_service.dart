@@ -23,6 +23,7 @@ class SendNotificationService {
       Map<String, dynamic> message = {
         "message": {
           if (token != null) "token": token,
+          if (topic == null) "topic": null,
           if (token == null && topic != null) "topic": topic,
           "notification": {
             "title": title,

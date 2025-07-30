@@ -37,9 +37,10 @@ class _CartState extends State<Cart> with SingleTickerProviderStateMixin {
   Map<String, TextEditingController> heightControllers = {};
   Map<String, TextEditingController> widthControllers = {};
   Map<String, TextEditingController> spaceControllers = {};
-
+  Map<String, int> localQuantities = {};
   List<QueryDocumentSnapshot> cartItems = [];
 
+  @override
   @override
   void initState() {
     super.initState();
@@ -47,16 +48,26 @@ class _CartState extends State<Cart> with SingleTickerProviderStateMixin {
     fetchAllItemsAndCalculateTotal();
     checkUserBlockedStatus();
 
-    // Initialize tracking for each item
     FirebaseFirestore.instance.collection('Cart Items').get().then((snapshot) {
       for (var doc in snapshot.docs) {
-        priceIncreased[doc.id] = false;
+        localQuantities[doc.id] = doc['Quantity'];
       }
     });
 
-    // Initialize TabController with the received index
+    FirebaseFirestore.instance
+        .collection('Custom Items')
+        .get()
+        .then((snapshot) {
+      for (var doc in snapshot.docs) {
+        localQuantities[doc.id] = doc['Quantity'];
+      }
+    });
+
     _tabController = TabController(
-        length: 2, vsync: this, initialIndex: widget.initialTabIndex);
+      length: 2,
+      vsync: this,
+      initialIndex: widget.initialTabIndex,
+    );
   }
 
   Future<void> checkUserBlockedStatus() async {
@@ -140,18 +151,22 @@ class _CartState extends State<Cart> with SingleTickerProviderStateMixin {
     double total = 0.0;
 
     for (var item in standardItems) {
-      double productPrice = double.tryParse(item['Price']) ?? 0.0;
-      int quantity = item['Quantity'];
+      double productPrice =
+          double.tryParse(item['Price'].toString().replaceAll(',', '')) ?? 0.0;
+      int quantity = item['Quantity'] ?? 1;
       total += productPrice * quantity;
     }
+
     cartTotalAmount = total;
 
     total = 0.0;
     for (var item in customItems) {
-      double productPrice = double.tryParse(item['Price']) ?? 0.0;
-      int quantity = item['Quantity'];
+      double productPrice =
+          double.tryParse(item['Price'].toString().replaceAll(',', '')) ?? 0.0;
+      int quantity = item['Quantity'] ?? 1;
       total += productPrice * quantity;
     }
+
     customTotalAmount = total;
 
     setState(() {
@@ -182,30 +197,35 @@ class _CartState extends State<Cart> with SingleTickerProviderStateMixin {
         .collection(isCustom ? 'Custom Items' : 'Cart Items');
 
     DocumentSnapshot doc = await collection.doc(itemId).get();
+    if (!doc.exists) return;
 
-    if (doc.exists) {
-      int quantity = doc['Quantity'];
-      double productPrice = double.tryParse(doc['Price'].toString()) ?? 0.0;
+    double productPrice = double.tryParse(
+          doc['Price'].toString().replaceAll(',', ''),
+        ) ??
+        0.0;
 
-      // Update UI immediately
-      quantity++;
-      double newTotalPrice = productPrice * quantity;
+    int quantity = localQuantities[itemId] ?? doc['Quantity'];
+    quantity++; // ✅ Increase locally first
+    localQuantities[itemId] = quantity;
 
-      // Update cartTotalAmount and totalAmount locally
-      setState(() {
-        cartTotalAmount += productPrice;
-        totalAmount = cartTotalAmount + customTotalAmount;
-      });
+    double newTotalPrice = productPrice * quantity;
 
-      // Firestore update in background
-      await collection.doc(itemId).update({
-        'Quantity': quantity,
-        'TotalPrice': newTotalPrice,
-      });
+    setState(() {
+      if (isCustom) {
+        customTotalAmount =
+            (customTotalAmount + productPrice).clamp(0.0, double.infinity);
+      } else {
+        cartTotalAmount =
+            (cartTotalAmount + productPrice).clamp(0.0, double.infinity);
+      }
+      totalAmount =
+          (cartTotalAmount + customTotalAmount).clamp(0.0, double.infinity);
+    });
 
-      // Optional: refresh cart items again if needed
-      // await fetchAllItemsAndCalculateTotal();
-    }
+    await collection.doc(itemId).update({
+      'Quantity': quantity,
+      'TotalPrice': newTotalPrice,
+    });
   }
 
   Future<void> decrementItem(String itemId, bool isCustom) async {
@@ -213,31 +233,39 @@ class _CartState extends State<Cart> with SingleTickerProviderStateMixin {
         .collection(isCustom ? 'Custom Items' : 'Cart Items');
 
     DocumentSnapshot doc = await collection.doc(itemId).get();
+    if (!doc.exists) return;
 
-    if (doc.exists) {
-      int quantity = doc['Quantity'];
-      double productPrice = double.tryParse(doc['Price'].toString()) ?? 0.0;
+    double productPrice = double.tryParse(
+          doc['Price'].toString().replaceAll(',', ''),
+        ) ??
+        0.0;
 
-      if (quantity > 1) {
-        // Update UI immediately
-        quantity--;
-        double newTotalPrice = productPrice * quantity;
+    int quantity = localQuantities[itemId] ?? doc['Quantity'];
 
-        setState(() {
-          cartTotalAmount -= productPrice;
-          totalAmount = cartTotalAmount + customTotalAmount;
-        });
+    // 🚫 Prevent going below 1
+    if (quantity <= 1) return;
 
-        // Firestore update in background
-        await collection.doc(itemId).update({
-          'Quantity': quantity,
-          'TotalPrice': newTotalPrice,
-        });
+    quantity--; // ✅ Decrease locally
+    localQuantities[itemId] = quantity;
 
-        // Optional: refresh cart items again if needed
-        // await fetchAllItemsAndCalculateTotal();
+    double newTotalPrice = productPrice * quantity;
+
+    setState(() {
+      if (isCustom) {
+        customTotalAmount =
+            (customTotalAmount - productPrice).clamp(0.0, double.infinity);
+      } else {
+        cartTotalAmount =
+            (cartTotalAmount - productPrice).clamp(0.0, double.infinity);
       }
-    }
+      totalAmount =
+          (cartTotalAmount + customTotalAmount).clamp(0.0, double.infinity);
+    });
+
+    await collection.doc(itemId).update({
+      'Quantity': quantity,
+      'TotalPrice': newTotalPrice,
+    });
   }
 
   @override
@@ -348,19 +376,20 @@ class _CartState extends State<Cart> with SingleTickerProviderStateMixin {
                           itemCount: items.length,
                           itemBuilder: (context, index) {
                             final item = snapshot.data![index];
-
-                            String price = item['Price'];
                             int quantity = item['Quantity'];
-
-                            double productPrice = double.tryParse(price) ?? 0.0;
+                            double productPrice = double.tryParse(item['Price']
+                                    .toString()
+                                    .replaceAll(',', '')) ??
+                                0.0;
                             double totalPrice = productPrice * quantity;
+
                             return buildCartItem(
                               context: context,
                               item: item,
                               image: item['Image'],
                               productName: item['ProductName'],
                               description: item['Description'],
-                              price: item['Price'],
+                              price: item['Price'].toString(),
                               height: item['Height'],
                               width: item['Width'],
                               space: item['Space'],
@@ -409,9 +438,11 @@ class _CartState extends State<Cart> with SingleTickerProviderStateMixin {
                             List<String> image = (item['Image'] is List)
                                 ? List<String>.from(item['Image'])
                                 : [item['Image']];
-                            int quantity = item['Quantity'];
 
-                            double productPrice = double.tryParse(price) ?? 0.0;
+                            int quantity = item['Quantity'];
+                            double productPrice = double.tryParse(
+                                    price.toString().replaceAll(',', '')) ??
+                                0.0;
                             double totalPrice = productPrice * quantity;
 
                             return buildCustomCartItem(
@@ -420,7 +451,7 @@ class _CartState extends State<Cart> with SingleTickerProviderStateMixin {
                               image: image,
                               productName: item['ProductName'],
                               description: item['Description'],
-                              price: item['Price'],
+                              price: item['Price'].toString(),
                               height: item['Height'],
                               width: item['Width'],
                               space: item['Space'],
