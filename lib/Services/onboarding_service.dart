@@ -101,7 +101,6 @@ class _OnboardingServiceState extends State<OnboardingService> {
         return;
       }
 
-      // ✅ If document exists, check first login flag
       final isFirstLogin = userDoc.data()?['isFirstLogin'] ?? true;
 
       if (isFirstLogin == true) {
