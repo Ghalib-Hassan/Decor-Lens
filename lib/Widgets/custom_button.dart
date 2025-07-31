@@ -1,3 +1,4 @@
+import 'package:audioplayers/audioplayers.dart';
 import 'package:decor_lens/Provider/dark_mode_provider.dart';
 import 'package:decor_lens/Utils/colors.dart';
 import 'package:flutter/material.dart';
@@ -46,6 +47,18 @@ class CustomButton extends StatefulWidget {
 }
 
 class _CustomButtonState extends State<CustomButton> {
+  final AudioPlayer _audioPlayer = AudioPlayer();
+
+  Future<void> _playClickSound() async {
+    await _audioPlayer.play(AssetSource('Sounds/click.mp3'));
+  }
+
+  @override
+  void dispose() {
+    _audioPlayer.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final darkModeService = Provider.of<DarkModeService>(context);
@@ -76,7 +89,10 @@ class _CustomButtonState extends State<CustomButton> {
             ),
           ),
         ),
-        onPressed: () => widget.onPressed(),
+        onPressed: () async {
+          await _playClickSound(); // 👈 play sound first
+          widget.onPressed(); // 👈 then perform the action
+        },
         child: widget.isLoading
             ? LoadingAnimationWidget.stretchedDots(
                 color: isDarkMode ? black : white,

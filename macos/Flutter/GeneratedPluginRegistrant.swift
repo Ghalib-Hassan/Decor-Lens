@@ -7,6 +7,7 @@ import Foundation
 
 import animated_rating_stars
 import app_settings
+import audioplayers_darwin
 import cloud_firestore
 import connectivity_plus
 import facebook_auth_desktop
@@ -29,6 +30,7 @@ import webview_flutter_wkwebview
 func RegisterGeneratedPlugins(registry: FlutterPluginRegistry) {
   AnimatedRatingStarsPlugin.register(with: registry.registrar(forPlugin: "AnimatedRatingStarsPlugin"))
   AppSettingsPlugin.register(with: registry.registrar(forPlugin: "AppSettingsPlugin"))
+  AudioplayersDarwinPlugin.register(with: registry.registrar(forPlugin: "AudioplayersDarwinPlugin"))
   FLTFirebaseFirestorePlugin.register(with: registry.registrar(forPlugin: "FLTFirebaseFirestorePlugin"))
   ConnectivityPlusPlugin.register(with: registry.registrar(forPlugin: "ConnectivityPlusPlugin"))
   FacebookAuthDesktopPlugin.register(with: registry.registrar(forPlugin: "FacebookAuthDesktopPlugin"))

@@ -1,3 +1,4 @@
+import 'package:audioplayers/audioplayers.dart';
 import 'package:decor_lens/Provider/dark_mode_provider.dart';
 import 'package:decor_lens/UI/User%20UI/account_screen.dart';
 import 'package:decor_lens/UI/User%20UI/cart_screen.dart';
@@ -20,6 +21,11 @@ class CustomBottomNavBar extends StatefulWidget {
 
 class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
   int? selectedIndex;
+  final AudioPlayer _audioPlayer = AudioPlayer(); // <-- Create instance
+
+  Future<void> _playSwipeSound() async {
+    await _audioPlayer.play(AssetSource('Sounds/swipe.mp3'));
+  }
 
   @override
   void initState() {
@@ -27,8 +33,11 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
     selectedIndex = widget.currentIndex;
   }
 
-  void _onItemTapped(BuildContext context, int index) {
-    if (index == widget.currentIndex) return; // Prevent unnecessary navigation
+  void _onItemTapped(BuildContext context, int index) async {
+    if (index == widget.currentIndex) return;
+
+    await _playSwipeSound(); // <-- Play sound before navigating
+
     setState(() {
       selectedIndex = index;
     });
@@ -40,6 +49,7 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
         break;
       case 1:
         nextScreen = FavouriteScreen();
+        break;
       case 2:
         nextScreen = Cart();
         break;
@@ -51,6 +61,12 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
     }
 
     Get.offAll(() => nextScreen, transition: Transition.fadeIn);
+  }
+
+  @override
+  void dispose() {
+    _audioPlayer.dispose(); // <-- Clean up
+    super.dispose();
   }
 
   @override

@@ -83,6 +83,7 @@ dependencies:
   flutter_stripe: ^10.0.0
   googleapis_auth: ^1.6.0
   smooth_page_indicator: ^1.2.1
+  audioplayers: ^6.4.0
 
   # stripe_platform_interface: ^9.4.0
 
@@ -160,6 +161,8 @@ flutter:
     - assets/images/beds/bed4.jpg
     - assets/Lottie/LottieAnimation.json
     - assets/Lottie/LottieAnimationSec.json
+    - assets/Sounds/click.mp3
+    - assets/Sounds/swipe.mp3
     # - assets/svg/list-bed.svg
     # - assets/svg/list-chair.svg
     # - assets/svg/list-popular.svg
