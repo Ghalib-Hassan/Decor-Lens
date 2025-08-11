@@ -302,6 +302,7 @@ class _EditItemsState extends State<EditItems> {
       price: itemPriceController.text,
       imageUrls: imageUrls,
       glbFileUrl: glbFileUrl,
+      newGlbFile: glbFile, // <-- pass the File? here
       height: heightController.text,
       width: widthController.text,
       space: spaceController.text,

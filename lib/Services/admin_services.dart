@@ -229,24 +229,68 @@ class AdminItemService {
     required String description,
     required String price,
     required List<String> imageUrls,
-    required String glbFileUrl,
+    required String
+        glbFileUrl, // current URL string (could be cloud url, empty, or file://)
+    File? newGlbFile, // <-- pass the picked File from your EditItems screen
     required String height,
     required String width,
     required String space,
   }) async {
     try {
+      // start from the provided URL (could be cloud url, empty, or file://)
+      String modelUrl = glbFileUrl;
+
+      // If no File was passed, but glbFileUrl looks like a local file URI, try to convert it to File
+      File? fileToUpload = newGlbFile;
+      if (fileToUpload == null &&
+          glbFileUrl.isNotEmpty &&
+          (glbFileUrl.startsWith('file://') ||
+              !glbFileUrl.startsWith('http'))) {
+        try {
+          final localPath = Uri.parse(glbFileUrl).toFilePath();
+          final localFile = File(localPath);
+          if (await localFile.exists()) {
+            fileToUpload = localFile;
+          }
+        } catch (_) {
+          // ignore parse errors — will just skip upload
+        }
+      }
+
+      // Upload to Cloudinary only if we have a file to upload
+      if (fileToUpload != null) {
+        final uploadUri = Uri.parse(
+            "https://api.cloudinary.com/v1_1/${dotenv.env['CLOUDINARY_CLOUD_NAME']}/raw/upload");
+        final request = http.MultipartRequest('POST', uploadUri);
+        request.files
+            .add(await http.MultipartFile.fromPath('file', fileToUpload.path));
+        request.fields['upload_preset'] = "admin_upload_preset";
+
+        final response = await request.send();
+        final responseBody = await response.stream.bytesToString();
+
+        if (response.statusCode == 200) {
+          final jsonResponse = jsonDecode(responseBody);
+          modelUrl = jsonResponse['secure_url'] ?? modelUrl;
+        } else {
+          throw Exception(
+              'Failed to upload 3D model (status: ${response.statusCode}): $responseBody');
+        }
+      }
+
+      // Update main item doc with final modelUrl (cloud URL or empty)
       await FirebaseFirestore.instance.collection('Items').doc(itemId).update({
         'ItemName': name,
         'ItemDescription': description,
         'ItemPrice': price,
         'Images': imageUrls,
-        'Model': glbFileUrl,
+        'Model': modelUrl,
         'Height': height,
         'Width': width,
         'Space': space,
       });
 
-      // ✅ Now update favorite entries
+      // Update favorites/items copies across users
       final favUsersSnapshot = await FirebaseFirestore.instance
           .collectionGroup('Items')
           .where('ItemId', isEqualTo: itemId)
@@ -258,7 +302,7 @@ class AdminItemService {
           'ItemDescription': description,
           'ItemPrice': price,
           'Images': imageUrls,
-          'Model': glbFileUrl,
+          'Model': modelUrl,
           'Height': height,
           'Width': width,
           'Space': space,
@@ -266,6 +310,7 @@ class AdminItemService {
         });
       }
 
+      // Optional: clear local picked file variable if you store it statically (not necessary here)
       customSnackbar(
         title: 'Success',
         message: 'Item updated successfully!',
@@ -297,20 +342,55 @@ class AdminItemService {
     required String price,
     required List<String> imageUrls,
     required String glbFileUrl,
+    File? newGlbFile,
   }) async {
     try {
+      String modelUrl = glbFileUrl;
+      File? fileToUpload = newGlbFile;
+      if (fileToUpload == null &&
+          glbFileUrl.isNotEmpty &&
+          (glbFileUrl.startsWith('file://') ||
+              !glbFileUrl.startsWith('http'))) {
+        try {
+          final localPath = Uri.parse(glbFileUrl).toFilePath();
+          final localFile = File(localPath);
+          if (await localFile.exists()) {
+            fileToUpload = localFile;
+          }
+        } catch (_) {}
+      }
+
+      if (fileToUpload != null) {
+        final uploadUri = Uri.parse(
+            "https://api.cloudinary.com/v1_1/${dotenv.env['CLOUDINARY_CLOUD_NAME']}/raw/upload");
+        final request = http.MultipartRequest('POST', uploadUri);
+        request.files
+            .add(await http.MultipartFile.fromPath('file', fileToUpload.path));
+        request.fields['upload_preset'] = "admin_upload_preset";
+
+        final response = await request.send();
+        final responseBody = await response.stream.bytesToString();
+
+        if (response.statusCode == 200) {
+          final jsonResponse = jsonDecode(responseBody);
+          modelUrl = jsonResponse['secure_url'] ?? modelUrl;
+        } else {
+          throw Exception(
+              'Failed to upload 3D model (status: ${response.statusCode}): $responseBody');
+        }
+      }
+
       await FirebaseFirestore.instance.collection('Items').doc(itemId).update({
         'ItemName': name,
         'ItemDescription': description,
         'ItemPrice': price,
         'Images': imageUrls,
-        'Model': glbFileUrl,
+        'Model': modelUrl,
         'Height': "",
         'Width': "",
         'Space': "",
       });
 
-// ✅ Update favorites too
       final favUsersSnapshot = await FirebaseFirestore.instance
           .collectionGroup('Items')
           .where('ItemId', isEqualTo: itemId)
@@ -322,13 +402,14 @@ class AdminItemService {
           'ItemDescription': description,
           'ItemPrice': price,
           'Images': imageUrls,
-          'Model': glbFileUrl,
+          'Model': modelUrl,
           'Height': "",
           'Width': "",
           'Space': "",
           'Timestamp': FieldValue.serverTimestamp(),
         });
       }
+
       customSnackbar(
         title: 'Success',
         message: 'Item updated successfully!',
@@ -340,7 +421,6 @@ class AdminItemService {
       );
     } catch (e) {
       print(e);
-      ;
       customSnackbar(
         title: 'Error',
         message: 'Failed to update item: $e',
